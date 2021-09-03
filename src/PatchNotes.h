@@ -8,6 +8,7 @@
 
 #include "BaseClasses.h"
 #include "Scrollbar.h"
+#include "StateManaging.h"
 
 class MainFrame;
 
@@ -57,6 +58,8 @@ class LeftSidebar : public wxPanel
 
 	CustomRTCScrollbar* m_scrollbar = nullptr;
 
+	wxString m_fileToBeLoaded;
+
 	bool m_isDragging = false;
 
 public:
@@ -68,6 +71,8 @@ public:
 
 	bool Load();
 	void SetMessage(const wxString& message);
+
+	bool SetState(btfl::LauncherState state);
 
 	void OnPaint(wxPaintEvent& event);
 	void OnMove(wxMouseEvent& event);

@@ -73,6 +73,7 @@ void CheckboxShape::SetState(bool isChecked)
 void CheckboxShape::OnLeftClick(const wxPoint& pos)
 {
 	SetState(!m_bIsChecked);
+	wxSFRoundRectShape::OnLeftClick(pos);
 }
 
 wxBEGIN_EVENT_TABLE(SecondaryPanel, BackgroundImageCanvas)
@@ -84,6 +85,8 @@ EVT_SF_SHAPE_LEFT_DOWN(BUTTON_Back, SecondaryPanel::OnFrameButtons)
 
 EVT_SF_SHAPE_LEFT_DOWN(BUTTON_DisclaimerAgree, SecondaryPanel::OnAcceptDisclaimer)
 EVT_SF_SHAPE_LEFT_DOWN(BUTTON_DisclaimerAgreeVerify, SecondaryPanel::OnAcceptDisclaimer)
+
+EVT_SF_SHAPE_LEFT_DOWN(BUTTON_AutoUpdate, SecondaryPanel::OnAutoUpdateChange)
 
 wxEND_EVENT_TABLE()
 
@@ -151,7 +154,7 @@ void SecondaryPanel::ShowDisclaimer()
 	}
 
 	wxSFDiagramManager* manager = GetDiagramManager();
-	if ( !m_disDecline && !m_mainFrame->HasUserAgreedToDisclaimer() )
+	if ( !m_disDecline && !btfl::HasUserAgreedToDisclaimer() )
 	{
 		m_verSizer->AddSpacer(BOTTOM_SPACE);
 
@@ -166,7 +169,7 @@ void SecondaryPanel::ShowDisclaimer()
 		m_disAgree->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
 		manager->AddShape(m_disAgree, nullptr, wxDefaultPosition, true, false);
 	}
-	else if ( m_disDecline && m_mainFrame->HasUserAgreedToDisclaimer() )
+	else if ( m_disDecline && btfl::HasUserAgreedToDisclaimer() )
 	{
 		m_verSizer->Remove(2);
 
@@ -244,6 +247,7 @@ void SecondaryPanel::ShowSettings()
 
 		m_autoUpdate = (CheckboxShape*)pManager->AddShape(CLASSINFO(CheckboxShape), false);
 		m_autoUpdate->SetRectSize(25, 25);
+		m_autoUpdate->SetId(BUTTON_AutoUpdate);
 
 		m_uninstallButton = new TransparentButton("UNINSTALL", wxDefaultPosition, wxDefaultPosition, 3.0, pManager);
 		m_uninstallButton->SetId(BUTTON_Uninstall);
@@ -257,7 +261,7 @@ void SecondaryPanel::ShowSettings()
 		m_mainSettingsGrid->AppendToGrid(m_autoUpdate);
 		m_mainSettingsGrid->AppendToGrid(m_uninstallButton);
 
-		m_mainSettingsGrid->Update();
+		ReloadSettings();
 	}
 
 	Layout();
@@ -274,9 +278,17 @@ void SecondaryPanel::SelectInstallPath()
 	if ( dirDialog.ShowModal() == wxID_OK )
 	{
 		m_installPath->SetText(dirDialog.GetPath());
+		btfl::SetInstallPath(dirDialog.GetPath());
 		RepositionAll();
 		Refresh();
 	}
+}
+
+void SecondaryPanel::SetSettings(const btfl::Settings& settings)
+{
+	m_settings.bLookForUpdates = settings.bLookForUpdates;
+	if ( m_mainSettingsGrid )
+		ReloadSettings();
 }
 
 void SecondaryPanel::OnFrameButtons(wxSFShapeMouseEvent& event)
@@ -303,7 +315,7 @@ void SecondaryPanel::OnFrameButtons(wxSFShapeMouseEvent& event)
 
 void SecondaryPanel::OnAcceptDisclaimer(wxSFShapeMouseEvent& event)
 {
-	m_mainFrame->AcceptDisclaimer();
+	btfl::AgreeToDisclaimer();
 	m_mainFrame->ShowMainPanel();
 
 	if ( event.GetId() == BUTTON_DisclaimerAgreeVerify )
@@ -312,6 +324,12 @@ void SecondaryPanel::OnAcceptDisclaimer(wxSFShapeMouseEvent& event)
 	// If the mouse isn't moved out of a button and the button is destroyed, the
 	// cursor doesn't set itself back to default, so I do it manually.
 	SetCursor(wxCURSOR_DEFAULT);
+}
+
+void SecondaryPanel::OnAutoUpdateChange(wxSFShapeMouseEvent& event)
+{
+	m_settings.bLookForUpdates = m_autoUpdate->IsChecked();
+	DoSaveSettings();
 }
 
 void SecondaryPanel::RepositionAll()
@@ -442,4 +460,10 @@ void SecondaryPanel::OnMouseMove(wxMouseEvent& event)
 			m_bIsHoveringInstallPath = bIsHoveringInstallPath;
 		}
 	}
+}
+
+void SecondaryPanel::ReloadSettings()
+{
+	m_installPath->SetText(btfl::GetInstallFileName().GetFullPath());
+	m_autoUpdate->SetState(m_settings.bLookForUpdates);
 }

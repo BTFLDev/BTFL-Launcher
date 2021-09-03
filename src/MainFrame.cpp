@@ -102,6 +102,13 @@ void MainFrame::OnLoadPatchNotesTimer(wxTimerEvent& event) {
 	}
 }
 
+void MainFrame::SetState(btfl::LauncherState state)
+{
+	m_mainPanel->SetState(state);	
+	if ( m_patchNotesWindow->SetState(state) )
+		LoadPatchNotes();
+}
+
 void MainFrame::ShowMainPanel()
 {
 	Freeze();

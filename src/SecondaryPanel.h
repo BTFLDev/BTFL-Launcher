@@ -6,6 +6,7 @@
 #include "PatchNotes.h"
 #include "FrameButtons.h"
 #include "TransparentButton.h"
+#include "StateManaging.h"
 
 #include <wx\wxsf\wxShapeFramework.h>
 #include <wx\richtext\richtextctrl.h>
@@ -40,6 +41,7 @@ enum
 	BUTTON_DisclaimerAgree,
 	BUTTON_DisclaimerAgreeVerify,
 
+	BUTTON_AutoUpdate,
 	BUTTON_Uninstall
 };
 
@@ -81,6 +83,8 @@ private:
 		* m_disAgree = nullptr;
 
 	/////////////////// Settings ///////////////////////
+	btfl::Settings m_settings;
+
 	wxSFFlexGridShape* m_mainSettingsGrid = nullptr;
 	wxSFTextShape* m_installPath = nullptr;
 	CheckboxShape* m_autoUpdate = nullptr;
@@ -100,8 +104,13 @@ public:
 
 	void SelectInstallPath();
 
+	void SetSettings(const btfl::Settings& settings);
+	btfl::Settings GetSettings() { return m_settings;  }
+
 	void OnFrameButtons(wxSFShapeMouseEvent& event);
 	void OnAcceptDisclaimer(wxSFShapeMouseEvent& event);
+
+	void OnAutoUpdateChange(wxSFShapeMouseEvent& event);
 
 	void RepositionAll();
 	void DeleteSettingsShapes();
@@ -113,5 +122,9 @@ public:
 	virtual void OnMouseMove(wxMouseEvent& event) override;
 
 	wxDECLARE_EVENT_TABLE();
+
+private:
+	void ReloadSettings();
+	void DoSaveSettings() { btfl::SaveSettings(m_settings); }
 };
 #endif

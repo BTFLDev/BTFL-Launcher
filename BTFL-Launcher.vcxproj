@@ -29,6 +29,8 @@
     <ClInclude Include="src\MyApp.h" />
     <ClInclude Include="src\Scrollbar.h" />
     <ClInclude Include="src\SecondaryPanel.h" />
+    <ClInclude Include="src\SQLEntry.h" />
+    <ClInclude Include="src\StateManaging.h" />
     <ClInclude Include="src\TransparentButton.h" />
     <ClInclude Include="src\wxmemdbg.h" />
   </ItemGroup>
@@ -41,6 +43,7 @@
     <ClCompile Include="src\MyApp.cpp" />
     <ClCompile Include="src\Scrollbar.cpp" />
     <ClCompile Include="src\SecondaryPanel.cpp" />
+    <ClCompile Include="src\StateManaging.cpp" />
     <ClCompile Include="src\TransparentButton.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -116,13 +119,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(WXWIN)\3rdparty\wxSF\include\;$(WXWIN)\3rdparty\digestpp\;$(WXWIN)\include\msvc\;$(WXWIN)\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(WXWIN)\3rdparty\wxSF\include\;$(WXWIN)\3rdparty\digestpp\;$(WXWIN)\include\msvc\;$(WXWIN)\include\;$(WXWIN)\3rdparty\wxsqlite3-4.6.4\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(WXWIN)\3rdparty\wxSF\lib\vc_lib;$(WXWIN)\lib\vc_lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>wxbase31ud.lib;wxmsw31ud_core.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregexu.lib;wxexpat.lib;wxmsw28ud_wxsf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(WXWIN)\3rdparty\wxsqlite3-4.6.4\lib\vc_lib;$(WXWIN)\3rdparty\wxSF\lib\vc_lib;$(WXWIN)\lib\vc_lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>wxbase31ud.lib;wxmsw31ud_core.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregexu.lib;wxexpat.lib;wxmsw28ud_wxsf.lib;wxsqlite3d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -133,15 +136,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(WXWIN)\3rdparty\wxSF\include\;$(WXWIN)\3rdparty\digestpp\;$(WXWIN)\include\msvc\;$(WXWIN)\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(WXWIN)\3rdparty\wxSF\include\;$(WXWIN)\3rdparty\digestpp\;$(WXWIN)\include\msvc\;$(WXWIN)\include\;$(WXWIN)\3rdparty\wxsqlite3-4.6.4\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>wxmsw31u_html.lib;wxbase31u_xml.lib;wxmsw31u_richtext.lib;wxbase31u.lib;wxmsw31u_core.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregexu.lib;wxexpat.lib;wxmsw28u_wxsf.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(WXWIN)\3rdparty\wxSF\lib\vc_lib\;$(WXWIN)\lib\vc_lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>wxmsw31u_html.lib;wxbase31u_xml.lib;wxmsw31u_richtext.lib;wxbase31u.lib;wxmsw31u_core.lib;wxjpeg.lib;wxpng.lib;wxzlib.lib;wxregexu.lib;wxexpat.lib;wxmsw28u_wxsf.lib;wxsqlite3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(WXWIN)\3rdparty\wxsqlite3-4.6.4\lib\vc_lib;$(WXWIN)\3rdparty\wxSF\lib\vc_lib;$(WXWIN)\lib\vc_lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

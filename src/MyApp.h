@@ -3,17 +3,14 @@
 #pragma once
 
 #include <wx\wx.h>
-#include <wx\image.h>
 
 class MainFrame;
 
 class MyApp : public wxApp
 {
-private:
-	MainFrame* m_mainFrame = nullptr;
-
 public:
-	virtual bool OnInit();
+	virtual bool OnInit() override;
+	virtual int OnExit() override;
 };
 
 wxDECLARE_APP(MyApp);

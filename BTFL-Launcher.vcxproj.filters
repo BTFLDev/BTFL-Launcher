@@ -51,6 +51,12 @@
     <ClInclude Include="src\wxmemdbg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\StateManaging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SQLEntry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MyApp.cpp">
@@ -78,6 +84,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\TransparentButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StateManaging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

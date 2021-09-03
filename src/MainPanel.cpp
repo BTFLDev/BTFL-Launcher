@@ -51,8 +51,8 @@ EVT_SF_SHAPE_LEFT_DOWN(BUTTON_Help, MainPanel::OnFrameButtons)
 EVT_SF_SHAPE_LEFT_DOWN(BUTTON_Minimize, MainPanel::OnFrameButtons)
 EVT_SF_SHAPE_LEFT_DOWN(BUTTON_Close, MainPanel::OnFrameButtons)
 
-EVT_SF_SHAPE_LEFT_DOWN(BUTTON_SelectIso, MainPanel::OnSelectIso)
-EVT_SF_SHAPE_LEFT_DOWN(BUTTON_VerifyIso, MainPanel::OnVerifyIso)
+EVT_SF_SHAPE_LEFT_DOWN(btfl::LauncherState::STATE_ToSelectIso, MainPanel::OnSelectIso)
+EVT_SF_SHAPE_LEFT_DOWN(btfl::LauncherState::STATE_ToVerifyIso, MainPanel::OnVerifyIso)
 EVT_SF_SHAPE_LEFT_DOWN(BUTTON_Settings, MainPanel::OnSettings)
 
 EVT_TIMER(TIMER_Gauge, MainPanel::OnGaugeTimer)
@@ -79,9 +79,7 @@ MainPanel::MainPanel(wxSFDiagramManager* manager,
 	manager->AcceptShape("TransparentButton");
 
 	m_mainButton = new TransparentButton("SELECT ISO", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
-	m_mainButton->SetId(BUTTON_SelectIso);
 	m_mainButton->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
-	m_mainButton->SetBitmap(wxBitmap("Assets\\Icon\\Verify@2x.png", wxBITMAP_TYPE_PNG));
 	manager->AddShape(m_mainButton, nullptr, wxDefaultPosition, true, false);
 
 	m_configButton = new TransparentButton("", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
@@ -92,6 +90,80 @@ MainPanel::MainPanel(wxSFDiagramManager* manager,
 
 	m_frameButtons = (FrameButtons*)manager->AddShape(CLASSINFO(FrameButtons), false);
 	m_frameButtons->Init();
+}
+
+void MainPanel::SetState(btfl::LauncherState state)
+{
+	m_mainButton->SetId(state);
+	m_fileDescColour = { 180, 180, 180 };
+
+	switch ( state )
+	{
+	case btfl::LauncherState::STATE_ToSelectIso:
+		m_mainButton->SetBitmap(wxBitmap("Assets\\Icon\\Verify@2x.png", wxBITMAP_TYPE_PNG));
+		m_mainButton->SetLabel("SELECT ISO");
+		m_mainButton->Enable(true);
+		
+		m_fileContainer.LoadFile("Assets\\Containers\\FilePath@2x.png", wxBITMAP_TYPE_PNG);
+		m_fileBmp.LoadFile("Assets\\Icon\\Browse@2x.png", wxBITMAP_TYPE_PNG); 
+		m_fileDescColour = { 52, 199, 226 };
+		break;
+
+	case btfl::LauncherState::STATE_ToVerifyIso:
+		m_mainButton->SetBitmap(wxBitmap("Assets\\Icon\\Verify@2x.png", wxBITMAP_TYPE_PNG));
+		m_mainButton->SetLabel("VERIFY ISO");
+		m_mainButton->Enable(true);
+
+		m_fileBmp.LoadFile("Assets\\Icon\\Folder@2x.png", wxBITMAP_TYPE_PNG);
+		m_fileLabel = btfl::GetIsoFileName().GetName();
+		m_fileDesc = "ISO File";
+		break;
+
+	case btfl::LauncherState::STATE_VerifyingIso:
+		m_mainButton->SetBitmap(wxNullBitmap);
+		m_mainButton->SetLabel("VERIFYING...");
+		m_mainButton->Enable(false);
+
+		m_fileBmp.LoadFile("Assets\\Icon\\Folder@2x.png", wxBITMAP_TYPE_PNG);
+		m_fileLabel = btfl::GetIsoFileName().GetName();
+		m_fileDesc = "ISO File";
+		break;
+
+	case btfl::LauncherState::STATE_ToInstallGame:
+		m_mainButton->SetBitmap(wxBitmap("Assets\\Icon\\Download@2x.png", wxBITMAP_TYPE_PNG));
+		m_mainButton->SetLabel("INSTALL");
+		m_mainButton->Enable(true);
+		
+		m_fileBmp.LoadFile("Assets\\Icon\\Check@2x.png", wxBITMAP_TYPE_PNG);
+		m_fileLabel = "Shadow Of The Colossus";
+		m_fileDesc = "PlayStation 2 ISO (NTSC)";
+		break;
+
+	case btfl::LauncherState::STATE_InstallingGame:
+		m_mainButton->SetBitmap(wxNullBitmap);
+		m_mainButton->SetLabel("INSTALLING...");
+		m_mainButton->Enable(false);
+		break;
+
+	case btfl::LauncherState::STATE_ToPlayGame:
+		m_mainButton->SetBitmap(wxNullBitmap);
+		m_mainButton->SetLabel("PLAY");
+		m_mainButton->Enable(true);
+		break;
+
+	case btfl::LauncherState::STATE_ToUpdateGame:
+		// TODO
+		break;
+
+	case btfl::LauncherState::STATE_UpdatingGame:
+		m_mainButton->SetBitmap(wxNullBitmap);
+		m_mainButton->SetLabel("UPDATE");
+		m_mainButton->Enable(false);
+		break;
+	}
+
+	RepositionAll();
+	Refresh();
 }
 
 void MainPanel::RepositionAll()
@@ -127,7 +199,7 @@ void MainPanel::RepositionAll()
 
 	m_xFDesc = m_xFLabel;
 	m_yFDesc = ((double)(m_yFCont + m_fileContainer.GetHeight()) * m_fileBmpScale) - textSize.y - 5;
-	if ( m_fileDesc == "View Installation Guide" )
+	if ( m_mainButton->GetId() == btfl::LauncherState::STATE_ToSelectIso )
 		m_fileDescRect = { wxPoint(m_xFDesc, m_yFDesc), textSize };
 	else
 		m_fileDescRect = { -1,-1,-1,-1 };
@@ -146,19 +218,17 @@ void MainPanel::RepositionAll()
 
 void MainPanel::VerifyIso()
 {
-	if ( !m_iso.Exists() )
+	if ( !btfl::GetIsoFileName().Exists() )
 		return;
 
 	// Create the gauge and make the main button, which right now is for
 	// verifying the iso, uninteractible.
 	CreateGauge();
-	m_mainButton->Enable(false);
-	m_mainFrame->Refresh();
-	m_mainFrame->Update();
+	btfl::SetState(btfl::LauncherState::STATE_VerifyingIso);
 
 	// Start the gauge timer so that updates to m_nextGaugeValue are
 	// taken into account.
-	m_gaugeTimer.Start(1);
+	m_gaugeTimer.Start(100);
 
 	// Start a new thread so we don't hog the program when verifying the iso.
 	std::thread thread(
@@ -167,7 +237,7 @@ void MainPanel::VerifyIso()
 			m_nextGaugeLabel = "Verifying ISO validity...";
 			srand(time(0));
 
-			wxString fileHash = iso::GetFileHash(m_iso.GetFullPath(), m_nextGaugeValue);
+			wxString fileHash = iso::GetFileHash(btfl::GetIsoFileName().GetFullPath(), m_nextGaugeValue);
 			
 			m_nextGaugeLabel = "Processing results...";
 			iso::ISO_Region region = iso::GetIsoRegion(fileHash);
@@ -266,28 +336,17 @@ void MainPanel::OnGaugeFinished()
 	switch ( m_gaugeResult )
 	{
 	case GAUGE_VerifyValid:
-		// If the iso is valid, change current state of m_mainButton, transforming it
-		// into a button to download and install the game.
-		m_mainButton->SetLabel("INSTALL");
-		m_mainButton->SetBitmap(wxBitmap("Assets\\Icon\\Download@2x.png", wxBITMAP_TYPE_PNG));
-		m_mainButton->SetId(BUTTON_Install);
-		m_mainButton->Enable(true);
-
-		// Update file labels to display what will be installed next.
-		m_fileLabel = "Shadow Of The Colossus";
-		m_fileDesc = "PlayStation 2 ISO (NTSC)";
-		m_fileBmp.LoadFile("Assets\\Icon\\Check@2x.png", wxBITMAP_TYPE_PNG);
+		// If the iso is valid, change current state to "STATE_ToInstallGame"
+		btfl::SetState(btfl::LauncherState::STATE_ToInstallGame);
 		break;
 
 	case GAUGE_VerifyInvalid:
-		// Just re-enable the m_mainButton but leave it as a verify button,
-		// Since the iso was invalid.
-		m_mainButton->Enable(true);
+		// Else, change state back to what it should be.
+		btfl::SetState(btfl::LauncherState::STATE_ToVerifyIso);
 		break;
 	}
 
 	DestroyGauge();
-	RepositionAll();
 }
 
 void MainPanel::DoSelectIso()
@@ -309,24 +368,16 @@ void MainPanel::DoSelectIso()
 		return;
 	}
 
-	m_iso = fileName;
+	btfl::SetIsoFileName(fileName);
 
 	// Show disclaimer before doing everything else if the user hasn't agreed to it yet.
-	if ( !m_mainFrame->HasUserAgreedToDisclaimer() )
+	if ( !btfl::HasUserAgreedToDisclaimer() )
 		m_mainFrame->ShowDisclaimer();
 
 	// Update GUI components to make the iso file selection clear to the user.
 	m_fileLabel = fileName.GetFullName();
 
-	m_fileDesc = "ISO File";
-	m_fileDescColour = { 180,180,180 };
-
-	m_fileBmp.LoadFile("Assets\\Icon\\Folder@2x.png", wxBITMAP_TYPE_PNG);
-	m_mainButton->SetLabel("VERIFY ISO");
-	m_mainButton->SetId(BUTTON_VerifyIso);
-
-	RepositionAll();
-	Refresh();
+	btfl::SetState(btfl::LauncherState::STATE_ToVerifyIso);
 }
 
 void MainPanel::OnFrameButtons(wxSFShapeMouseEvent& event)
@@ -358,7 +409,7 @@ void MainPanel::OnVerifyIso(wxSFShapeMouseEvent& event)
 {
 	// If the user still hasn't agreed to the disclaimer, make them agree to it again.
 	// VerifyIso() will only be called once they do.
-	if ( !m_mainFrame->HasUserAgreedToDisclaimer() )
+	if ( !btfl::HasUserAgreedToDisclaimer() )
 	{
 		m_mainFrame->ShowDisclaimer();
 		return;
@@ -404,7 +455,8 @@ void MainPanel::OnMouseMove(wxMouseEvent& event)
 {
 	BackgroundImageCanvas::OnMouseMove(event);
 
-	bool bIsHoveringViewGuide = m_mainButton->GetId() == BUTTON_SelectIso && m_fileDescRect.Contains(event.GetPosition());
+	bool bIsHoveringViewGuide = m_mainButton->GetId() == btfl::LauncherState::STATE_ToSelectIso
+		&& m_fileDescRect.Contains(event.GetPosition());
 	if ( bIsHoveringViewGuide != m_isHoveringViewGuide )
 	{
 		SetCursor((wxStockCursor)((wxCURSOR_DEFAULT * !bIsHoveringViewGuide) + (wxCURSOR_CLOSED_HAND * bIsHoveringViewGuide)));
@@ -414,7 +466,7 @@ void MainPanel::OnMouseMove(wxMouseEvent& event)
 	{
 		if ( !bIsHoveringViewGuide && !m_gauge )
 		{
-			bool bIsHoveringFileCont = m_mainButton->GetId() == BUTTON_VerifyIso
+			bool bIsHoveringFileCont = m_mainButton->GetId() == btfl::LauncherState::STATE_ToVerifyIso
 				&& wxRect(
 					wxPoint(m_xFBmp, m_yFBmp) * m_fileBmpScale,
 					m_fileBmp.GetSize() * m_fileBmpScale

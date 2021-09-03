@@ -12,6 +12,7 @@
 #include "PatchNotes.h"
 #include "FrameButtons.h"
 #include "TransparentButton.h"
+#include "StateManaging.h"
 
 class MainFrame;
 class CustomGauge;
@@ -50,12 +51,6 @@ public:
 enum
 {
 	BUTTON_Settings,
-
-	BUTTON_SelectIso,
-	BUTTON_VerifyIso,
-	BUTTON_Install,
-	BUTTON_Play,
-
 	TIMER_Gauge
 };
 
@@ -74,8 +69,6 @@ private:
 
 	wxBitmap m_logo;
 	int m_logox = 0, m_logoy = 0;
-
-	wxFileName m_iso;
 
 	wxString m_fileLabel{ "No ISO selected..." }, m_fileDesc{ "View Installation Guide" };
 	wxFont m_fileLabelFont{ wxFontInfo(12).FaceName("Times New Roman") },
@@ -112,12 +105,10 @@ public:
 		const wxSize& size = wxDefaultSize,
 		long style = wxBORDER_NONE);
 
-	inline const wxBitmap& GetBackgroundBitmap() { return m_background; }
+	void SetState(btfl::LauncherState state);
 
 	// Put everything in place, be it buttons, labels, bitmaps, etc.
 	void RepositionAll();
-
-	inline wxFileName GetISOFile() { return m_iso; }
 
 	// Start the iso verification process. Only works if m_iso is valid.
 	void VerifyIso();

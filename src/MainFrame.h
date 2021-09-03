@@ -7,6 +7,7 @@
 #include "MainPanel.h"
 #include "SecondaryPanel.h"
 #include "PatchNotes.h"
+#include "StateManaging.h"
 
 enum
 {
@@ -39,8 +40,12 @@ public:
 		long style = wxDEFAULT_FRAME_STYLE,
 		const wxString& name = wxFrameNameStr);
 
+	SecondaryPanel* GetSecondaryPanel() { return m_seconPanel; }
+
 	void LoadPatchNotes();
 	void OnLoadPatchNotesTimer(wxTimerEvent& event);
+
+	void SetState(btfl::LauncherState state);
 
 	void ShowMainPanel();
 	void ShowSecondaryPanel();
@@ -52,7 +57,7 @@ public:
 	void AcceptDisclaimer() { m_hasUserAgreedToDisclaimer = true; }
 	void OnReadDisclaimer(wxMouseEvent& event);
 
-	bool IsIsoSelected() { return m_mainPanel->GetISOFile().FileExists(); }
+	bool IsIsoSelected() { return btfl::GetIsoFileName().FileExists(); }
 	bool HasUserAgreedToDisclaimer() { return m_hasUserAgreedToDisclaimer; }
 
 	inline const wxBitmap& GetBackgroundBitmap() { return m_mainPanel->GetBackgroundBitmap(); }

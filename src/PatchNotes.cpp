@@ -173,7 +173,7 @@ bool LeftSidebar::Load()
 	SetMessage("\nFetching latest content...");
 
 	wxFileSystem fs;
-	wxFSFile* file = fs.OpenFile("http://btflgame.com/patch_notes/all.xml");
+	wxFSFile* file = fs.OpenFile("http://btflgame.com/patch_notes/" + m_fileToBeLoaded);
 
 	if ( file )
 	{
@@ -186,9 +186,7 @@ bool LeftSidebar::Load()
 			buf.SetBasicStyle(m_rtc->GetBasicStyle());
 
 			m_rtc->GetBuffer() = buf;
-			m_rtc->Invalidate();
-			m_rtc->Refresh();
-			m_rtc->Update();
+			m_rtc->LayoutContent();
 			m_scrollbar->RecalculateSelf();
 
 			delete file;
@@ -205,6 +203,29 @@ void LeftSidebar::SetMessage(const wxString& message)
 {
 	m_rtc->SetValue(message);
 	Refresh();
+}
+
+bool LeftSidebar::SetState(btfl::LauncherState state)
+{
+	wxString lastFile = m_fileToBeLoaded;
+	switch ( state )
+	{
+	case btfl::LauncherState::STATE_ToSelectIso:
+	case btfl::LauncherState::STATE_ToVerifyIso:
+	case btfl::LauncherState::STATE_VerifyingIso:
+		m_fileToBeLoaded = "all.xml";
+		break;
+
+	case btfl::LauncherState::STATE_ToInstallGame:
+	case btfl::LauncherState::STATE_InstallingGame:
+	case btfl::LauncherState::STATE_ToPlayGame:
+	case btfl::LauncherState::STATE_ToUpdateGame:
+	case btfl::LauncherState::STATE_UpdatingGame:
+		m_fileToBeLoaded = "all.xml";
+		break;
+	}
+
+	return lastFile != m_fileToBeLoaded;
 }
 
 void LeftSidebar::OnPaint(wxPaintEvent& event)
