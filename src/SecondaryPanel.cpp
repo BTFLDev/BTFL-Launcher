@@ -272,7 +272,7 @@ void SecondaryPanel::OnFileLoaded()
 
 void SecondaryPanel::SelectInstallPath()
 {
-	wxDirDialog dirDialog(nullptr, _("Please select an original Shadow Of The Colossus ISO file..."),
+	wxDirDialog dirDialog(nullptr, _("Please select a folder..."),
 		"./", wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 	
 	if ( dirDialog.ShowModal() == wxID_OK )
