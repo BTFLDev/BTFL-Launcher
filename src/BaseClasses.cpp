@@ -215,12 +215,14 @@ void RTCFileLoader::OnWebRequestChanged(wxWebRequestEvent& event)
 		}
 
 		OnFileLoaded();
+		break;
 	}
 	case wxWebRequest::State_Unauthorized:
 	case wxWebRequest::State_Failed:
 	case wxWebRequest::State_Cancelled:
 		m_nLoadAttempts++;
 		m_loadTimer.Start(1000);
+		break;
 	}
 }
 
