@@ -1,8 +1,11 @@
 #pragma once
 
-#include <wx\wx.h>
-#include <wx\richtext\richtextctrl.h>
-#include <wx\wxsf\wxShapeFramework.h>
+#include "Scrollbar.h"
+
+#include <wx/wx.h>
+#include <wx/richtext/richtextctrl.h>
+#include <wx/webrequest.h>
+#include <wx/wxsf/wxShapeFramework.h>
 
 
 //////////////////////////////////////////////////////////////////
@@ -72,4 +75,35 @@ public:
 	void OnBgAnimTimer(wxTimerEvent& event);
 
 	void _OnSize(wxSizeEvent& event);
+};
+
+class RTCFileLoader
+{
+protected:
+	wxEvtHandler* m_evtHandler = nullptr;
+	ReadOnlyRTC* m_rtc = nullptr;
+	CustomRTCScrollbar* m_scrollbar = nullptr;
+
+	wxWebRequest m_webRequest;
+
+	wxString m_sUrl = "https://btflgame.com/launcher-files/",
+		m_sFileToLoad,
+		m_sPlaceholder = "\nFetching latest content...",
+		m_sFinalError = "\nCouldn't reach the servers.\nPlease check that you have a stable and working internet connection "
+		"and restart the application.";
+
+	unsigned int m_nLoadAttempts = 0,
+		m_nLoadRetryCountdown = 10;
+	wxTimer m_loadTimer;
+
+public:
+	RTCFileLoader(wxEvtHandler* evtHandler);
+
+	bool StartLoadLoop();
+	void SetMessage(const wxString& message);
+
+	void OnWebRequestChanged(wxWebRequestEvent& event);
+	void OnLoadTimer(wxTimerEvent& event);
+
+	virtual void OnFileLoaded() { }
 };

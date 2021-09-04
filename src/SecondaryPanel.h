@@ -62,7 +62,7 @@ public:
 	virtual void OnMouseLeave(const wxPoint& pos) override { GetParentCanvas()->SetCursor(wxCURSOR_DEFAULT); }
 };
 
-class SecondaryPanel : public BackgroundImageCanvas
+class SecondaryPanel : public BackgroundImageCanvas, public RTCFileLoader
 {
 private:
 	MainFrame* m_mainFrame = nullptr;
@@ -78,7 +78,6 @@ private:
 
 	wxBoxSizer* m_verSizer = nullptr;
 
-	DisclaimerPanel* m_disclaimer = nullptr;
 	TransparentButton* m_disDecline = nullptr,
 		* m_disAgree = nullptr;
 
@@ -102,6 +101,8 @@ public:
 	void ShowDisclaimer();
 	void ShowSettings();
 
+	virtual void OnFileLoaded() override;
+
 	void SelectInstallPath();
 
 	void SetSettings(const btfl::Settings& settings);
@@ -115,6 +116,8 @@ public:
 	void RepositionAll();
 	void DeleteSettingsShapes();
 	void SetShapeStyle(wxSFShapeBase* shape);
+	void LayoutSelf();
+
 	virtual void DrawForeground(wxDC& dc, bool fromPaint) override;
 
 	virtual void OnSize(wxSizeEvent& event) override;

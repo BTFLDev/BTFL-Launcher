@@ -4,8 +4,6 @@
 #include <wx\richtext\richtextxml.h>
 #include <wx\dcbuffer.h>
 #include <wx\dcgraph.h>
-#include <wx\filesys.h>
-#include <wx\fs_inet.h>
 #include <wx\sstream.h>
 
 #include "wxmemdbg.h"
@@ -120,13 +118,12 @@ LeftSidebar::LeftSidebar(wxWindow* parent,
 	wxWindowID id,
 	const wxPoint& pos,
 	const wxSize& size,
-	long style) : wxPanel(parent, id, pos, size, style)
+	long style) : wxPanel(parent, id, pos, size, style), RTCFileLoader(this)
 {
 	m_mainFrame = (MainFrame*)parent;
 
 	SetBackgroundColour(wxColour(0, 0, 0));
 
-	wxFileSystem::AddHandler(new wxInternetFSHandler);
 	wxRichTextBuffer::AddHandler(new wxRichTextXMLHandler);
 
 	m_rtc = new ReadOnlyRTC(this, -1, "", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
@@ -168,52 +165,15 @@ LeftSidebar::LeftSidebar(wxWindow* parent,
 	SetSizer(sizer);
 }
 
-bool LeftSidebar::Load()
-{
-	SetMessage("\nFetching latest content...");
-
-	wxFileSystem fs;
-	wxFSFile* file = fs.OpenFile("http://btflgame.com/patch_notes/" + m_fileToBeLoaded);
-
-	if ( file )
-	{
-		wxStringInputStream* stream = (wxStringInputStream*)(file->GetStream());
-
-		if ( stream->CanRead() )
-		{
-			wxRichTextBuffer buf;
-			buf.LoadFile(*stream, wxRICHTEXT_TYPE_XML);
-			buf.SetBasicStyle(m_rtc->GetBasicStyle());
-
-			m_rtc->GetBuffer() = buf;
-			m_rtc->LayoutContent();
-			m_scrollbar->RecalculateSelf();
-
-			delete file;
-			return true;
-		}
-
-		delete file;
-	}
-
-	return false;
-}
-
-void LeftSidebar::SetMessage(const wxString& message)
-{
-	m_rtc->SetValue(message);
-	Refresh();
-}
-
 bool LeftSidebar::SetState(btfl::LauncherState state)
 {
-	wxString lastFile = m_fileToBeLoaded;
+	wxString lastFile = m_sFileToLoad;
 	switch ( state )
 	{
 	case btfl::LauncherState::STATE_ToSelectIso:
 	case btfl::LauncherState::STATE_ToVerifyIso:
 	case btfl::LauncherState::STATE_VerifyingIso:
-		m_fileToBeLoaded = "all.xml";
+		m_sFileToLoad = "welcome.xml";
 		break;
 
 	case btfl::LauncherState::STATE_ToInstallGame:
@@ -221,11 +181,11 @@ bool LeftSidebar::SetState(btfl::LauncherState state)
 	case btfl::LauncherState::STATE_ToPlayGame:
 	case btfl::LauncherState::STATE_ToUpdateGame:
 	case btfl::LauncherState::STATE_UpdatingGame:
-		m_fileToBeLoaded = "all.xml";
+		m_sFileToLoad = "all.xml";
 		break;
 	}
 
-	return lastFile != m_fileToBeLoaded;
+	return lastFile != m_sFileToLoad;
 }
 
 void LeftSidebar::OnPaint(wxPaintEvent& event)

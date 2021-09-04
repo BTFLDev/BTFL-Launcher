@@ -2,18 +2,13 @@
 
 #include "wxmemdbg.h"
 
-wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
-EVT_TIMER(TIMER_LoadPatchNotes, MainFrame::OnLoadPatchNotesTimer)
-wxEND_EVENT_TABLE()
-
-
 MainFrame::MainFrame(wxWindow* parent,
 	wxWindowID id,
 	const wxString& title,
 	const wxPoint& pos,
 	const wxSize& size,
 	long style,
-	const wxString& name) : wxFrame(parent, id, title, pos, size, style, name), m_loadPatchNotesTimer(this, TIMER_LoadPatchNotes)
+	const wxString& name) : wxFrame(parent, id, title, pos, size, style, name)
 {
 	SetIcon(wxICON(aaaaBTFLIconNoText));
 	SetBackgroundColour(wxColour(0, 0, 0));
@@ -63,43 +58,6 @@ MainFrame::MainFrame(wxWindow* parent,
 
 			event.Skip();
 		});
-}
-
-void MainFrame::LoadPatchNotes()
-{
-	if ( m_nLoadPatchNotesAttempts < 5 ) {
-		if ( !m_patchNotesWindow->Load() )
-		{
-			m_nLoadPatchNotesAttempts++;
-			m_nLoadPatchNotesCountdown = 10;
-			m_loadPatchNotesTimer.Start(1000);
-		}
-		else
-		{
-			m_loadPatchNotesTimer.Stop();
-		}
-	}
-	else {
-		m_patchNotesWindow->SetMessage(
-			"\nCouldn't reach the servers.\nPlease check that you have a stable and working internet connection "
-			"and restart the application."
-		);
-		m_loadPatchNotesTimer.Stop();
-	}
-}
-
-void MainFrame::OnLoadPatchNotesTimer(wxTimerEvent& event) {
-	if ( m_nLoadPatchNotesCountdown == 0 )
-	{
-		LoadPatchNotes();
-	}
-	else
-	{
-		m_patchNotesWindow->SetMessage(
-			"\nCouldn't reach the servers.\nPlease check that you have a stable and working internet connection. "
-			"Trying again in " + std::to_string(m_nLoadPatchNotesCountdown--) + " seconds..."
-		);
-	}
 }
 
 void MainFrame::SetState(btfl::LauncherState state)

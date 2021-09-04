@@ -91,9 +91,10 @@ EVT_SF_SHAPE_LEFT_DOWN(BUTTON_AutoUpdate, SecondaryPanel::OnAutoUpdateChange)
 wxEND_EVENT_TABLE()
 
 SecondaryPanel::SecondaryPanel(wxSFDiagramManager* manager, MainFrame* parent) :
-	BackgroundImageCanvas(manager, parent, -1)
+	BackgroundImageCanvas(manager, parent, -1), RTCFileLoader(this)
 {
 	m_mainFrame = parent;
+	m_sFileToLoad = "disclaimer.xml";
 
 	MAX_BG_OFFSET = 0;
 	m_background.LoadFile("Assets\\Background\\Subpage@2x.png", wxBITMAP_TYPE_PNG);
@@ -128,75 +129,28 @@ void SecondaryPanel::ShowDisclaimer()
 {
 	m_title->SetText("DISCLAIMER AGREEMENT");
 	
-	if ( !m_disclaimer )
+	if ( !m_rtc )
 	{
 		DeleteSettingsShapes();
 
-		m_disclaimer = new DisclaimerPanel(this, -1, "", wxDefaultPosition, wxSize(700, -1));
-		CustomRTCScrollbar* scrollbar = new CustomRTCScrollbar(this, m_disclaimer, -1);
-
-		wxRichTextBuffer buf;
-		buf.LoadFile("Assets\\Temp.xml", wxRICHTEXT_TYPE_XML);
-		buf.SetBasicStyle(m_disclaimer->GetBasicStyle());
-		m_disclaimer->GetBuffer() = buf;
-		m_disclaimer->Invalidate();
+		m_rtc = new DisclaimerPanel(this, -1, "", wxDefaultPosition, wxSize(700, -1));
+		m_scrollbar = new CustomRTCScrollbar(this, m_rtc, -1);
 
 		wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 		sizer->AddStretchSpacer(1);
-		sizer->Add(m_disclaimer, wxSizerFlags(0).Expand());
+		sizer->Add(m_rtc, wxSizerFlags(0).Expand());
 		sizer->AddStretchSpacer(1);
-		sizer->Add(scrollbar, wxSizerFlags(0).Expand());
+		sizer->Add(m_scrollbar, wxSizerFlags(0).Expand());
 		sizer->AddSpacer(20);
 
 		m_verSizer->Clear(true);
 		m_verSizer->AddSpacer(TOP_SPACE);
 		m_verSizer->Add(sizer, wxSizerFlags(1).Expand());
+
+		StartLoadLoop();
 	}
 
-	wxSFDiagramManager* manager = GetDiagramManager();
-	if ( !m_disDecline && !btfl::HasUserAgreedToDisclaimer() )
-	{
-		m_verSizer->AddSpacer(BOTTOM_SPACE);
-
-		m_disDecline = new TransparentButton("DECLINE", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
-		m_disDecline->SetId(BUTTON_Back);
-		m_disDecline->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
-		manager->AddShape(m_disDecline, nullptr, wxDefaultPosition, true, false);
-
-		m_disAgree = new TransparentButton("", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
-		m_disAgree->SetFill(wxBrush(wxColour(255, 255, 255)));
-		m_disAgree->SetTextColour(wxColour(0, 0, 0));
-		m_disAgree->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
-		manager->AddShape(m_disAgree, nullptr, wxDefaultPosition, true, false);
-	}
-	else if ( m_disDecline && btfl::HasUserAgreedToDisclaimer() )
-	{
-		m_verSizer->Remove(2);
-
-		manager->RemoveShape(m_disDecline, false);
-		manager->RemoveShape(m_disAgree, true);
-		m_disDecline = nullptr;
-		m_disAgree = nullptr;
-	}
-
-	if ( m_disAgree )
-	{
-		if ( m_mainFrame->IsIsoSelected() )
-		{
-			m_disAgree->SetLabel("ACCEPT & VERIFY");
-			m_disAgree->SetId(BUTTON_DisclaimerAgreeVerify);
-		}
-		else
-		{
-			m_disAgree->SetLabel("ACCEPT");
-			m_disAgree->SetId(BUTTON_DisclaimerAgree);
-		}
-	}
-
-	Layout();
-	SendSizeEvent();
-	RepositionAll();
-	Refresh();
+	LayoutSelf();
 }
 
 void SecondaryPanel::ShowSettings()
@@ -204,10 +158,11 @@ void SecondaryPanel::ShowSettings()
 	m_title->SetText("SETTINGS");
 	wxSFDiagramManager* pManager = GetDiagramManager();
 
-	if ( m_disclaimer )
+	if ( m_rtc )
 	{
 		m_verSizer->Clear(true);
-		m_disclaimer = nullptr;
+		m_rtc = nullptr;
+		m_scrollbar = nullptr;
 
 		if ( m_disDecline )
 		{
@@ -264,10 +219,55 @@ void SecondaryPanel::ShowSettings()
 		ReloadSettings();
 	}
 
-	Layout();
-	SendSizeEvent();
-	RepositionAll();
-	Refresh();
+	LayoutSelf();
+}
+
+void SecondaryPanel::OnFileLoaded()
+{
+	if ( !m_rtc )
+		return;
+
+	wxSFDiagramManager* manager = GetDiagramManager();
+	if ( !m_disDecline && !btfl::HasUserAgreedToDisclaimer() )
+	{
+		m_verSizer->AddSpacer(BOTTOM_SPACE);
+
+		m_disDecline = new TransparentButton("DECLINE", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
+		m_disDecline->SetId(BUTTON_Back);
+		m_disDecline->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
+		manager->AddShape(m_disDecline, nullptr, wxDefaultPosition, true, false);
+
+		m_disAgree = new TransparentButton("", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
+		m_disAgree->SetFill(wxBrush(wxColour(255, 255, 255)));
+		m_disAgree->SetTextColour(wxColour(0, 0, 0));
+		m_disAgree->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
+		manager->AddShape(m_disAgree, nullptr, wxDefaultPosition, true, false);
+	}
+	else if ( m_disDecline && btfl::HasUserAgreedToDisclaimer() )
+	{
+		m_verSizer->Remove(2);
+
+		manager->RemoveShape(m_disDecline, false);
+		manager->RemoveShape(m_disAgree, true);
+		m_disDecline = nullptr;
+		m_disAgree = nullptr;
+	}
+
+	if ( m_disAgree )
+	{
+		if ( m_mainFrame->IsIsoSelected() )
+		{
+			m_disAgree->SetLabel("ACCEPT & VERIFY");
+			m_disAgree->SetId(BUTTON_DisclaimerAgreeVerify);
+		}
+		else
+		{
+			m_disAgree->SetLabel("ACCEPT");
+			m_disAgree->SetId(BUTTON_DisclaimerAgree);
+		}
+	}
+
+	LayoutSelf();
 }
 
 void SecondaryPanel::SelectInstallPath()
@@ -346,9 +346,9 @@ void SecondaryPanel::RepositionAll()
 	shapeSize = m_backArrow->GetRectSize();
 	m_backArrow->MoveTo(10, 10);
 
-	if ( m_disclaimer )
+	if ( m_rtc )
 	{
-		wxRect disclaimerRect = m_disclaimer->GetRect();
+		wxRect disclaimerRect = m_rtc->GetRect();
 
 		if ( m_disDecline )
 		{
@@ -401,6 +401,14 @@ void SecondaryPanel::SetShapeStyle(wxSFShapeBase* shape)
 	);
 }
 
+void SecondaryPanel::LayoutSelf()
+{
+	Layout();
+	SendSizeEvent();
+	RepositionAll();
+	Refresh();
+}
+
 void SecondaryPanel::DrawForeground(wxDC& dc, bool fromPaint)
 {
 	dc.SetUserScale(m_bgScale, m_bgScale);
@@ -419,14 +427,14 @@ void SecondaryPanel::OnSize(wxSizeEvent& event)
 {
 	BackgroundImageCanvas::OnSize(event);
 
-	if ( m_disclaimer )
+	if ( m_rtc )
 	{
-		wxPoint disclaimerPos = m_disclaimer->GetPosition();
+		wxPoint disclaimerPos = m_rtc->GetPosition();
 
 		// For some reason I need to offset the x component by 15 so it statys aligned.
 		// Might be a quirk with how wxRTC draws itself
-		m_disclaimer->SetBackgroundX(m_bgx - ((double)disclaimerPos.x / m_bgScale));
-		m_disclaimer->SetBackgroundY(m_bgy - ((double)disclaimerPos.y / m_bgScale));
+		((DisclaimerPanel*)m_rtc)->SetBackgroundX(m_bgx - ((double)disclaimerPos.x / m_bgScale));
+		((DisclaimerPanel*)m_rtc)->SetBackgroundY(m_bgy - ((double)disclaimerPos.y / m_bgScale));
 	}
 
 	RepositionAll();

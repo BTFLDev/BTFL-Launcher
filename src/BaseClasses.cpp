@@ -163,3 +163,93 @@ void BackgroundImageCanvas::_OnSize(wxSizeEvent& event)
 	this->OnSize(event);
 	event.Skip();
 }
+
+RTCFileLoader::RTCFileLoader(wxEvtHandler* evtHandler) : m_loadTimer(evtHandler, 12345)
+{
+	m_evtHandler = evtHandler;
+
+	m_evtHandler->Bind(wxEVT_WEBREQUEST_STATE, [&](wxWebRequestEvent& evt) { OnWebRequestChanged(evt); });
+	m_evtHandler->Bind(wxEVT_TIMER, [&](wxTimerEvent& evt) { OnLoadTimer(evt); });
+}
+
+bool RTCFileLoader::StartLoadLoop()
+{
+	if ( !m_rtc )
+		return false;
+
+	if ( m_nLoadAttempts >= 5 )
+	{
+		SetMessage(m_sFinalError);
+		m_nLoadAttempts = 0;
+		return false;
+	}
+
+	SetMessage(m_sPlaceholder);
+
+	m_webRequest = wxWebSession::GetDefault().CreateRequest(m_evtHandler, m_sUrl);
+	if ( !m_webRequest.IsOk() )
+		return false;
+
+	m_webRequest.Start();
+	return true;
+}
+
+void RTCFileLoader::OnWebRequestChanged(wxWebRequestEvent& event)
+{
+	if ( !m_rtc )
+		return;
+
+	switch ( event.GetState() )
+	{
+	case wxWebRequest::State_Completed:
+	{
+		wxRichTextBuffer buffer;
+		buffer.LoadFile(*event.GetResponse().GetStream());
+
+		if ( !buffer.IsEmpty() )
+		{
+			buffer.SetBasicStyle(m_rtc->GetBasicStyle());
+
+			m_rtc->GetBuffer() = buffer;
+			m_rtc->LayoutContent();
+		}
+
+		OnFileLoaded();
+	}
+	case wxWebRequest::State_Unauthorized:
+	case wxWebRequest::State_Failed:
+	case wxWebRequest::State_Cancelled:
+		m_nLoadAttempts++;
+		m_loadTimer.Start(1000);
+	}
+}
+
+void RTCFileLoader::OnLoadTimer(wxTimerEvent& event)
+{
+	if ( event.GetId() != 12345 )
+	{
+		event.Skip();
+		return;
+	}
+
+	if ( m_nLoadRetryCountdown == 0 || !m_rtc )
+	{
+		m_nLoadRetryCountdown = 10;
+		m_loadTimer.Stop();
+		StartLoadLoop();
+	}
+	else
+	{
+		SetMessage(
+			"\nCouldn't reach the servers.\nPlease check that you have a stable and working internet connection. "
+			"Trying again in " + std::to_string(m_nLoadRetryCountdown--) + " seconds..."
+		);
+	}
+}
+
+void RTCFileLoader::SetMessage(const wxString& message)
+{
+	m_rtc->SetValue(message);
+	m_rtc->Refresh();
+	m_rtc->Update();
+}

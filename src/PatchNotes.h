@@ -51,26 +51,16 @@ public:
 ///////////////////////////////////////////////////////////////////////
 
 
-class LeftSidebar : public wxPanel
+class LeftSidebar : public wxPanel, public RTCFileLoader
 {
 	MainFrame* m_mainFrame = nullptr;
-	ReadOnlyRTC* m_rtc = nullptr;
-
-	CustomRTCScrollbar* m_scrollbar = nullptr;
-
-	wxString m_fileToBeLoaded;
-
-	bool m_isDragging = false;
-
+	
 public:
 	LeftSidebar(wxWindow* parent,
 		wxWindowID id,
 		const wxPoint& pos = wxDefaultPosition,
 		const wxSize& size = wxDefaultSize,
 		long style = wxBORDER_NONE);
-
-	bool Load();
-	void SetMessage(const wxString& message);
 
 	bool SetState(btfl::LauncherState state);
 
