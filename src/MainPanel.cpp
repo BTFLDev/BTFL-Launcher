@@ -68,12 +68,12 @@ MainPanel::MainPanel(wxSFDiagramManager* manager,
 {
 	m_mainFrame = parent;
 
-	m_background.LoadFile("Assets\\Background\\Main Page Roc@2x.png", wxBITMAP_TYPE_PNG);
-	m_logo.LoadFile("Assets\\LauncherLogo.png", wxBITMAP_TYPE_PNG);
+	m_background.LoadFile("Assets/Background/Main Page Roc@2x.png", wxBITMAP_TYPE_PNG);
+	m_logo.LoadFile("Assets/LauncherLogo.png", wxBITMAP_TYPE_PNG);
 	m_bgRatio = (double)m_background.GetWidth() / m_background.GetHeight();
 
-	m_fileContainer.LoadFile("Assets\\Containers\\FilePath@2x.png", wxBITMAP_TYPE_PNG);
-	m_fileBmp.LoadFile("Assets\\Icon\\Browse@2x.png", wxBITMAP_TYPE_PNG);
+	m_fileContainer.LoadFile("Assets/Containers/FilePath@2x.png", wxBITMAP_TYPE_PNG);
+	m_fileBmp.LoadFile("Assets/Icon/Browse@2x.png", wxBITMAP_TYPE_PNG);
 	m_fileBmpScale = (double)216 / m_fileContainer.GetWidth();
 
 	manager->AcceptShape("TransparentButton");
@@ -84,7 +84,7 @@ MainPanel::MainPanel(wxSFDiagramManager* manager,
 
 	m_configButton = new TransparentButton("", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
 	m_configButton->SetId(BUTTON_Settings);
-	m_configButton->SetBitmap(wxBitmap("Assets\\Icon\\Settings@2x.png", wxBITMAP_TYPE_PNG));
+	m_configButton->SetBitmap(wxBitmap("Assets/Icon/Settings@2x.png", wxBITMAP_TYPE_PNG));
 	m_configButton->SetPadding(15, 15);
 	manager->AddShape(m_configButton, nullptr, wxDefaultPosition, true, false);
 
@@ -100,21 +100,21 @@ void MainPanel::SetState(btfl::LauncherState state)
 	switch ( state )
 	{
 	case btfl::LauncherState::STATE_ToSelectIso:
-		m_mainButton->SetBitmap(wxBitmap("Assets\\Icon\\Verify@2x.png", wxBITMAP_TYPE_PNG));
+		m_mainButton->SetBitmap(wxBitmap("Assets/Icon/Verify@2x.png", wxBITMAP_TYPE_PNG));
 		m_mainButton->SetLabel("SELECT ISO");
 		m_mainButton->Enable(true);
 		
-		m_fileContainer.LoadFile("Assets\\Containers\\FilePath@2x.png", wxBITMAP_TYPE_PNG);
-		m_fileBmp.LoadFile("Assets\\Icon\\Browse@2x.png", wxBITMAP_TYPE_PNG); 
+		m_fileContainer.LoadFile("Assets/Containers/FilePath@2x.png", wxBITMAP_TYPE_PNG);
+		m_fileBmp.LoadFile("Assets/Icon/Browse@2x.png", wxBITMAP_TYPE_PNG); 
 		m_fileDescColour = { 52, 199, 226 };
 		break;
 
 	case btfl::LauncherState::STATE_ToVerifyIso:
-		m_mainButton->SetBitmap(wxBitmap("Assets\\Icon\\Verify@2x.png", wxBITMAP_TYPE_PNG));
+		m_mainButton->SetBitmap(wxBitmap("Assets/Icon/Verify@2x.png", wxBITMAP_TYPE_PNG));
 		m_mainButton->SetLabel("VERIFY ISO");
 		m_mainButton->Enable(true);
 
-		m_fileBmp.LoadFile("Assets\\Icon\\Folder@2x.png", wxBITMAP_TYPE_PNG);
+		m_fileBmp.LoadFile("Assets/Icon/Folder@2x.png", wxBITMAP_TYPE_PNG);
 		m_fileLabel = btfl::GetIsoFileName().GetName();
 		m_fileDesc = "ISO File";
 		break;
@@ -124,13 +124,13 @@ void MainPanel::SetState(btfl::LauncherState state)
 		m_mainButton->SetLabel("VERIFYING...");
 		m_mainButton->Enable(false);
 
-		m_fileBmp.LoadFile("Assets\\Icon\\Folder@2x.png", wxBITMAP_TYPE_PNG);
+		m_fileBmp.LoadFile("Assets/Icon/Folder@2x.png", wxBITMAP_TYPE_PNG);
 		m_fileLabel = btfl::GetIsoFileName().GetName();
 		m_fileDesc = "ISO File";
 		break;
 
 	case btfl::LauncherState::STATE_ToInstallGame:
-		m_mainButton->SetBitmap(wxBitmap("Assets\\Icon\\Download@2x.png", wxBITMAP_TYPE_PNG));
+		m_mainButton->SetBitmap(wxBitmap("Assets/Icon/Download@2x.png", wxBITMAP_TYPE_PNG));
 		m_mainButton->SetLabel("INSTALL");
 		m_mainButton->Enable(true);
 		

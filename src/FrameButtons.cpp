@@ -18,17 +18,17 @@ void FrameButtons::Init()
 	SetBorder(wxPen(wxColour(255, 255, 255, 80), 1));
 
 	wxSFBitmapShape* helpButton = (wxSFBitmapShape*)GetParentCanvas()->GetDiagramManager()->AddShape(CLASSINFO(wxSFBitmapShape), false);
-	helpButton->CreateFromFile("Assets\\Icon\\Help.png", wxBITMAP_TYPE_PNG);
+	helpButton->CreateFromFile("Assets/Icon/Help.png", wxBITMAP_TYPE_PNG);
 	helpButton->SetId(BUTTON_Help);
 	helpButton->SetStyle(sfsHOVERING | sfsEMIT_EVENTS | sfsALWAYS_INSIDE);
 
 	wxSFBitmapShape* minimizeButton = (wxSFBitmapShape*)GetParentCanvas()->GetDiagramManager()->AddShape(CLASSINFO(wxSFBitmapShape), false);
-	minimizeButton->CreateFromFile("Assets\\Icon\\Minimize.png", wxBITMAP_TYPE_PNG);
+	minimizeButton->CreateFromFile("Assets/Icon/Minimize.png", wxBITMAP_TYPE_PNG);
 	minimizeButton->SetId(BUTTON_Minimize);
 	minimizeButton->SetStyle(sfsHOVERING | sfsEMIT_EVENTS | sfsALWAYS_INSIDE);
 
 	wxSFBitmapShape* closeButton = (wxSFBitmapShape*)GetParentCanvas()->GetDiagramManager()->AddShape(CLASSINFO(wxSFBitmapShape), false);
-	closeButton->CreateFromFile("Assets\\Icon\\Close.png", wxBITMAP_TYPE_PNG);
+	closeButton->CreateFromFile("Assets/Icon/Close.png", wxBITMAP_TYPE_PNG);
 	closeButton->SetId(BUTTON_Close);
 	closeButton->SetStyle(sfsHOVERING | sfsEMIT_EVENTS | sfsALWAYS_INSIDE);
 

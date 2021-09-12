@@ -1,3 +1,3 @@
 // Start with 'aaaa' because the first icon, alphabetically, is used to display
 // the application in the taskbar.
-aaaaBTFLIconNoText ICON "Assets\\BTFLIconNoText.ico"
+aaaaBTFLIconNoText ICON "Assets/BTFLIconNoText.ico"
