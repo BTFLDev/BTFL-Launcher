@@ -97,15 +97,15 @@ SecondaryPanel::SecondaryPanel(wxSFDiagramManager* manager, MainFrame* parent) :
 	m_sFileToLoad = "disclaimer.xml";
 
 	MAX_BG_OFFSET = 0;
-	m_background.LoadFile("Assets\\Background\\Subpage@2x.png", wxBITMAP_TYPE_PNG);
+	m_background.LoadFile("Assets/Background/Subpage@2x.png", wxBITMAP_TYPE_PNG);
 	m_bgRatio = (double)m_background.GetWidth() / m_background.GetHeight();
 
 	manager->AcceptShape("All");
 
-	m_topSeparator.LoadFile("Assets\\Spacer\\Full Window Width@2x.png", wxBITMAP_TYPE_PNG);
+	m_topSeparator.LoadFile("Assets/Spacer/Full Window Width@2x.png", wxBITMAP_TYPE_PNG);
 
 	m_backArrow = (wxSFBitmapShape*)manager->AddShape(CLASSINFO(wxSFBitmapShape), false);
-	m_backArrow->CreateFromFile("Assets\\Icon\\Arrow Left.png", wxBITMAP_TYPE_PNG);
+	m_backArrow->CreateFromFile("Assets/Icon/Arrow Left.png", wxBITMAP_TYPE_PNG);
 	m_backArrow->SetId(BUTTON_Back);
 	m_backArrow->SetStyle(
 		wxSFShapeBase::STYLE::sfsHOVERING |

@@ -139,15 +139,15 @@ LeftSidebar::LeftSidebar(wxWindow* parent,
 	rtcSizer->AddSpacer(5);
 	rtcSizer->Add(m_rtc, wxSizerFlags(1).Expand());
 
-	HyperlinkPanel* website = new HyperlinkPanel(this, "http://btflgame.com", wxBitmap("Assets\\Icon\\Website@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
+	HyperlinkPanel* website = new HyperlinkPanel(this, "http://btflgame.com", wxBitmap("Assets/Icon/Website@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
 	website->SetBackgroundColour(wxColour(0, 0, 0));
-	HyperlinkPanel* discord = new HyperlinkPanel(this, "https://discord.gg/PcjByKk", wxBitmap("Assets\\Icon\\Discord@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
+	HyperlinkPanel* discord = new HyperlinkPanel(this, "https://discord.gg/PcjByKk", wxBitmap("Assets/Icon/Discord@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
 	discord->SetBackgroundColour(wxColour(0, 0, 0));
-	HyperlinkPanel* reddit = new HyperlinkPanel(this, "https://reddit.com/r/BTFLgame", wxBitmap("Assets\\Icon\\Reddit@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
+	HyperlinkPanel* reddit = new HyperlinkPanel(this, "https://reddit.com/r/BTFLgame", wxBitmap("Assets/Icon/Reddit@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
 	reddit->SetBackgroundColour(wxColour(0, 0, 0));
-	HyperlinkPanel* twitter = new HyperlinkPanel(this, "http://twitter.com/btfl_game", wxBitmap("Assets\\Icon\\Twitter@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
+	HyperlinkPanel* twitter = new HyperlinkPanel(this, "http://twitter.com/btfl_game", wxBitmap("Assets/Icon/Twitter@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
 	twitter->SetBackgroundColour(wxColour(0, 0, 0));
-	HyperlinkPanel* youtube = new HyperlinkPanel(this, "https://www.youtube.com/channel/UC4Z1YwJ0fAMt5MU0y2melOA/", wxBitmap("Assets\\Icon\\YouTube@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
+	HyperlinkPanel* youtube = new HyperlinkPanel(this, "https://www.youtube.com/channel/UC4Z1YwJ0fAMt5MU0y2melOA/", wxBitmap("Assets/Icon/YouTube@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
 	youtube->SetBackgroundColour(wxColour(0, 0, 0));
 
 	wxBoxSizer* socialSizer = new wxBoxSizer(wxHORIZONTAL);

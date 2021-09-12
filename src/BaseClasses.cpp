@@ -29,7 +29,7 @@ ReadOnlyRTC::ReadOnlyRTC(wxWindow* parent,
 	SetBackgroundColour(wxColour(0, 0, 0));
 	SetFontScale(1.13);
 
-	m_shadowBitmap.LoadFile("Assets\\Scroll Shadow\\Large@2x.png", wxBITMAP_TYPE_PNG);
+	m_shadowBitmap.LoadFile("Assets/Scroll Shadow/Large@2x.png", wxBITMAP_TYPE_PNG);
 }
 
 void ReadOnlyRTC::PaintAboveContent(wxDC& dc)

@@ -91,7 +91,7 @@ private:
 
 	bool m_bIsHoveringInstallPath = false;
 
-	wxBitmap m_installPathBmp{ "Assets\\Icon\\Folder@2x.png", wxBITMAP_TYPE_PNG };
+	wxBitmap m_installPathBmp{ "Assets/Icon/Folder@2x.png", wxBITMAP_TYPE_PNG };
 	float m_fInstallPathBmpScale = 1.0;
 	wxPoint m_installPathBmpPos;
 
