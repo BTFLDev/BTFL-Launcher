@@ -1,4 +1,5 @@
 #include "BaseClasses.h"
+#include "StateManaging.h"
 
 #include "wxmemdbg.h"
 
@@ -164,7 +165,8 @@ void BackgroundImageCanvas::_OnSize(wxSizeEvent& event)
 	event.Skip();
 }
 
-RTCFileLoader::RTCFileLoader(wxEvtHandler* evtHandler) : m_loadTimer(evtHandler, 12345)
+RTCFileLoader::RTCFileLoader(wxEvtHandler* evtHandler) : 
+	m_loadTimer(evtHandler, 12345), m_sUrl(btfl::GetStorageURL() + "launcher-files/")
 {
 	m_evtHandler = evtHandler;
 
