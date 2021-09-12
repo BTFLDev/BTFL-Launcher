@@ -68,6 +68,8 @@ namespace btfl
 
 	void SetState(LauncherState state);
 
+	inline wxString GetStorageURL() { return "https://btflgame.com/"; }
+
 	void UpdateDatabase(const btfl::SQLEntry& sqlEntry);
 
 	const wxFileName& GetIsoFileName();

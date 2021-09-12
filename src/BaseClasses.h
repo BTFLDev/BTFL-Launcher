@@ -86,7 +86,7 @@ protected:
 
 	wxWebRequest m_webRequest;
 
-	wxString m_sUrl = "https://btflgame.com/launcher-files/",
+	wxString m_sUrl,
 		m_sFileToLoad,
 		m_sPlaceholder = "\nFetching latest content...",
 		m_sFinalError = "\nCouldn't reach the servers.\nPlease check that you have a stable and working internet connection "
