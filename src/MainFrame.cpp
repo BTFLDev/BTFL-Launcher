@@ -27,13 +27,27 @@ MainFrame::MainFrame(wxWindow* parent,
 	m_copyrightPanel->SetBackgroundColour(wxColour(0, 0, 0));
 
 	wxStaticText* copyright = new wxStaticText(m_copyrightPanel, -1, "Beyond The Forbidden Lands is officialy classified as a modification of \"Shadow of the Colossus\" (2005) and ownership of the original game is required to play.");
-	copyright->SetFont(wxFontInfo(11).FaceName("Times New Roman"));
-	copyright->SetForegroundColour(wxColour(150, 150, 150));
+	copyright->SetFont(wxFontInfo(10).FaceName("Lora"));
+	copyright->SetForegroundColour(wxColour(130, 130, 130));
 
 	wxStaticText* readDisclaimers = new wxStaticText(m_copyrightPanel, -1, "Read Disclaimers");
-	readDisclaimers->SetFont(wxFontInfo(11).FaceName("Times New Roman"));
+	readDisclaimers->SetFont(wxFontInfo(10).FaceName("Lora"));
 	readDisclaimers->SetForegroundColour(wxColour(52, 199, 226));
 	readDisclaimers->Bind(wxEVT_LEFT_DOWN, &MainFrame::OnReadDisclaimer, this);
+	readDisclaimers->Bind(wxEVT_ENTER_WINDOW, [readDisclaimers](wxMouseEvent& event)
+		{
+			readDisclaimers->SetForegroundColour(wxColour(30, 150, 180));
+			readDisclaimers->Refresh();
+			readDisclaimers->Update();
+		}
+	);
+	readDisclaimers->Bind(wxEVT_LEAVE_WINDOW, [readDisclaimers](wxMouseEvent& event)
+		{
+			readDisclaimers->SetForegroundColour(wxColour(52, 199, 226));
+			readDisclaimers->Refresh();
+			readDisclaimers->Update();
+		}
+	);
 	readDisclaimers->SetCursor(wxCURSOR_CLOSED_HAND);
 
 	wxBoxSizer* copyrightSizer = new wxBoxSizer(wxHORIZONTAL);

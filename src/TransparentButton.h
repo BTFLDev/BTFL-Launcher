@@ -11,7 +11,7 @@ protected:
 	wxFont m_font;
 	wxColour m_textColour{ 255,255,255 };
 
-	int m_xPadding = 30, m_yPadding = 15;
+	int m_xPadding = 35, m_yPadding = 12;
 	int m_xLabel = 30;
 
 	wxBitmap* m_bitmap = nullptr;

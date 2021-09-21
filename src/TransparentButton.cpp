@@ -101,6 +101,7 @@ void TransparentButton::RecalculateSelf(const wxSize& soloBmpSize)
 	wxClientDC dc(pCanvas);
 	dc.SetFont(m_font);
 	wxSize size = dc.GetMultiLineTextExtent(m_label);
+	size.y -= 5;
 	m_xLabel = m_xPadding;
 
 	if ( m_bitmap )
@@ -125,15 +126,16 @@ void TransparentButton::RecalculateSelf(const wxSize& soloBmpSize)
 				size.x = (double)m_bitmap->GetWidth() * m_bmpScale;
 				size.y = (double)m_bitmap->GetHeight() * m_bmpScale;
 			}
-		} else
+		} 
+		else
 		{
-			m_bmpScale = (double)size.y / m_bitmap->GetHeight();
-			m_yBitmap = m_yPadding;
+			m_bmpScale = double(size.y - 4) / (m_bitmap->GetHeight());
+			m_yBitmap = m_yPadding + 2;
 			m_xBitmap = m_xPadding;
 
 			int bmpx = (double)m_bitmap->GetWidth() * m_bmpScale;
-			size.x += bmpx + 5;
-			m_xLabel += bmpx + 5;
+			size.x += bmpx + 10;
+			m_xLabel += bmpx + 10;
 		}
 	}
 

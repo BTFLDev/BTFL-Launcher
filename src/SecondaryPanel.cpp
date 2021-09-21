@@ -114,7 +114,7 @@ SecondaryPanel::SecondaryPanel(wxSFDiagramManager* manager, MainFrame* parent) :
 
 	m_title = (wxSFTextShape*)manager->AddShape(CLASSINFO(wxSFTextShape), false);
 	m_title->SetTextColour(wxColour(255, 255, 255));
-	m_title->SetFont(wxFontInfo(15).Bold().FaceName("Times New Roman"));
+	m_title->SetFont(wxFontInfo(15).Bold().FaceName("Lora"));
 	m_title->SetStyle(0);
 
 	m_frameButtons = (FrameButtons*)manager->AddShape(CLASSINFO(FrameButtons), false);
@@ -185,28 +185,28 @@ void SecondaryPanel::ShowSettings()
 
 		wxSFTextShape* pInstallPathLabel = (wxSFTextShape*)pManager->AddShape(CLASSINFO(wxSFTextShape), false);
 		pInstallPathLabel->SetTextColour(*wxWHITE);
-		pInstallPathLabel->SetFont(wxFontInfo(14).Bold().FaceName("Times New Roman"));
+		pInstallPathLabel->SetFont(wxFontInfo(14).Bold().FaceName("Lora"));
 		SetShapeStyle(pInstallPathLabel);
 		pInstallPathLabel->SetText("Install Path                                            ");
 
 		m_installPath = (wxSFTextShape*)pManager->AddShape(CLASSINFO(wxSFTextShape), false);
 		m_installPath->SetTextColour(*wxWHITE);
-		m_installPath->SetFont(wxFontInfo(14).FaceName("Times New Roman"));
+		m_installPath->SetFont(wxFontInfo(12).FaceName("Lora"));
 		SetShapeStyle(m_installPath);
 
 		wxSFTextShape* pAutoUpdateLabel = (wxSFTextShape*)pManager->AddShape(CLASSINFO(wxSFTextShape), false);
 		pAutoUpdateLabel->SetTextColour(*wxWHITE);
-		pAutoUpdateLabel->SetFont(wxFontInfo(14).Bold().FaceName("Times New Roman"));
+		pAutoUpdateLabel->SetFont(wxFontInfo(14).Bold().FaceName("Lora"));
 		SetShapeStyle(pAutoUpdateLabel);
-		pAutoUpdateLabel->SetText("Automatically look for and install updates                   ");
+		pAutoUpdateLabel->SetText("Automatically  look  for  and  install  updates                   ");
 
 		m_autoUpdate = (CheckboxShape*)pManager->AddShape(CLASSINFO(CheckboxShape), false);
-		m_autoUpdate->SetRectSize(25, 25);
+		m_autoUpdate->SetRectSize(28, 28);
 		m_autoUpdate->SetId(BUTTON_AutoUpdate);
 
 		m_uninstallButton = new TransparentButton("UNINSTALL", wxDefaultPosition, wxDefaultPosition, 3.0, pManager);
 		m_uninstallButton->SetId(BUTTON_Uninstall);
-		m_uninstallButton->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
+		m_uninstallButton->SetFont(wxFontInfo(20).FaceName("Lora"));
 		m_uninstallButton->AddStyle(wxSFShapeBase::STYLE::sfsSIZE_CHANGE);
 		pManager->AddShape(m_uninstallButton, nullptr, wxDefaultPosition, true, false);
 
@@ -234,13 +234,11 @@ void SecondaryPanel::OnFileLoaded()
 
 		m_disDecline = new TransparentButton("DECLINE", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
 		m_disDecline->SetId(BUTTON_Back);
-		m_disDecline->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
+		m_disDecline->SetFont(wxFontInfo(20).FaceName("Lora"));
 		manager->AddShape(m_disDecline, nullptr, wxDefaultPosition, true, false);
 
 		m_disAgree = new TransparentButton("", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
-		m_disAgree->SetFill(wxBrush(wxColour(255, 255, 255)));
-		m_disAgree->SetTextColour(wxColour(0, 0, 0));
-		m_disAgree->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
+		m_disAgree->SetFont(wxFontInfo(20).FaceName("Lora"));
 		manager->AddShape(m_disAgree, nullptr, wxDefaultPosition, true, false);
 	}
 	else if ( m_disDecline && btfl::HasUserAgreedToDisclaimer() )
