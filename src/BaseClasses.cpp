@@ -17,7 +17,10 @@ ReadOnlyRTC::ReadOnlyRTC(wxWindow* parent,
 	SetCursor(wxCURSOR_DEFAULT);
 	SetTextCursor(wxCURSOR_DEFAULT);
 	Bind(wxEVT_SET_FOCUS, [](wxFocusEvent&) {});
-	Bind(wxEVT_LEFT_DOWN, [](wxMouseEvent&) {});
+	Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) {
+		
+		}
+	);
 	Bind(wxEVT_RIGHT_UP, [](wxMouseEvent&) {});
 	Bind(wxEVT_CHAR, [](wxKeyEvent&) {});
 	Bind(wxEVT_KEY_DOWN, [](wxKeyEvent&) {});

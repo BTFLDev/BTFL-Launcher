@@ -5,6 +5,7 @@
 #include <wx\wx.h>
 #include <wx\filename.h>
 #include <wx\wxsf\wxShapeFramework.h>
+#include <wx/thread.h>
 
 #include <atomic>
 
@@ -51,13 +52,20 @@ public:
 enum
 {
 	BUTTON_Settings,
-	TIMER_Gauge
+	TIMER_Gauge,
+
+	WEB_Install,
+	WEB_LookForLauncherUpdate,
+	WEB_LookForGameUpdate
 };
 
 enum GaugeResult
 {
 	GAUGE_VerifyValid,
 	GAUGE_VerifyInvalid,
+
+	GAUGE_InstallationSuccessful,
+	GAUGE_InstallationUnsuccessful,
 
 	GAUGE_Invalid
 };
@@ -86,16 +94,31 @@ private:
 		m_xFBmp = -1, m_yFBmp = -1;
 
 	TransparentButton* m_mainButton = nullptr,
-		* m_configButton = nullptr;
+		* m_configButton = nullptr,
+		* m_updateButton = nullptr;
 	FrameButtons* m_frameButtons = nullptr;
+
+	bool m_bShouldDeleteUpdateBtn = false;
 
 	CustomGauge* m_gauge = nullptr;
 	wxSFTextShape* m_gaugeLabel = nullptr,
 		* m_gaugeProgress = nullptr;
 	wxTimer m_gaugeTimer;
 	std::atomic<int> m_nextGaugeValue;
+	wxMutex m_nextGaugeValueMutex;
 	wxString m_nextGaugeLabel;
-	GaugeResult m_gaugeResult = GAUGE_Invalid;
+	std::atomic<GaugeResult> m_gaugeResult = GAUGE_Invalid;
+
+	wxWebRequest m_webRequest;
+	wxWebRequest m_latestLauncherVersionRequest;
+	wxWebRequest m_latestGameVersionRequest;
+
+	bool m_bIsDraggingFrame = false;
+	wxRect m_dragSafeArea;
+	wxPoint m_dragStartMousePos, m_dragStartFramePos;
+
+	wxPoint m_versionLabelPos;
+	wxFont m_versionFont{ wxFontInfo(8).FaceName("Lora") };
 
 public:
 	MainPanel(wxSFDiagramManager* manager,
@@ -116,6 +139,9 @@ public:
 	void CreateGauge();
 	void DestroyGauge();
 
+	void CreateUpdateButton();
+	void DestroyUpdateButton();
+
 	// Updates the gauge and refreshes the screen. "Message" is assiged to m_gaugeLabel.
 	void UpdateGauge(int currentUnit, const wxString& message);
 
@@ -129,18 +155,34 @@ public:
 	void OnGaugeFinished();
 
 	void DoSelectIso();
+	void DoInstallGame();
+
+	void DoLookForLauncherUpdates();
+	void DoLookForGameUpdates();
+
+	void OnWebRequestState(wxWebRequestEvent& event);
+
+	void UnzipGameFiles();
 
 	// wxSF event handlers.
 	void OnFrameButtons(wxSFShapeMouseEvent& event);
 	void OnSelectIso(wxSFShapeMouseEvent& event);
 	void OnVerifyIso(wxSFShapeMouseEvent& event);
+	void OnInstall(wxSFShapeMouseEvent& event);
+	void OnPlay(wxSFShapeMouseEvent& event);
 	void OnSettings(wxSFShapeMouseEvent& event);
 
 	virtual void OnSize(wxSizeEvent& event) override;
 	virtual void OnMouseMove(wxMouseEvent& event) override;
 	virtual void OnLeftDown(wxMouseEvent& event) override;
+	virtual void OnLeftUp(wxMouseEvent& event) override;
 
 	virtual void DrawForeground(wxDC& dc, bool fromPaint) override;
+
+	inline void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt)
+	{
+		m_bIsDraggingFrame = false;
+	}
 
 	wxDECLARE_EVENT_TABLE();
 };

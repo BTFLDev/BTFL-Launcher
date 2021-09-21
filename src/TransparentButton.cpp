@@ -8,8 +8,7 @@ TransparentButton::TransparentButton(const wxString& label, const wxRealPoint& p
 	double radius, wxSFDiagramManager* manager) :
 	wxSFRoundRectShape(pos, size, radius, manager)
 {
-	SetFill(wxBrush(wxColour(255, 255, 255, 50)));
-	SetBorder(*wxTRANSPARENT_PEN);
+	SetState(Idle);
 
 	AddStyle(sfsEMIT_EVENTS);
 
@@ -78,6 +77,30 @@ void TransparentButton::SetBitmap(const wxBitmap& bmp)
 		*m_bitmap = bmp;
 
 	m_bmpRatio = (double)bmp.GetWidth() / bmp.GetHeight();
+}
+
+void TransparentButton::SetState(TBState style)
+{
+	switch ( style )
+	{
+	case Idle:
+		SetFill(wxBrush(wxColour(255, 255, 255, 50)));
+		SetBorder(*wxTRANSPARENT_PEN);
+		SetTextColour(wxColour(255, 255, 255));
+		break;
+
+	case Processing:
+		SetFill(*wxTRANSPARENT_BRUSH);
+		SetBorder(wxPen(wxColour(255, 255, 255, 50), 2));
+		SetTextColour(wxColour(255, 255, 255, 50));
+		break;
+
+	case Special:
+		SetFill(wxBrush(wxColour(255, 255, 255)));
+		SetBorder(*wxTRANSPARENT_PEN);
+		SetTextColour(wxColour(0, 0, 0));
+		break;
+	}
 }
 
 void TransparentButton::SetPadding(int x, int y)
