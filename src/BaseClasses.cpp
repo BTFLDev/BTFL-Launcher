@@ -223,6 +223,9 @@ void RTCFileLoader::OnWebRequestChanged(wxWebRequestEvent& event)
 
 			m_rtc->GetBuffer() = buffer;
 			m_rtc->LayoutContent();
+			m_rtc->Refresh();
+			m_rtc->Update();
+			m_scrollbar->RecalculateSelf();
 		}
 
 		OnFileLoaded();
