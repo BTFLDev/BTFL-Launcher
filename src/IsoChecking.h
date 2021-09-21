@@ -8,7 +8,11 @@
 #include <atomic>
 
 #include <digestpp.hpp>
+
 #include "IsoHashes.h"
+#include "Utils.h"
+
+#include "wxmemdbg.h"
 
 namespace iso
 {
@@ -46,7 +50,7 @@ namespace iso
 				continue;
 			}
 
-			if ( hash == userHash )
+			if ( hash == utils::crypto::GetEncryptedString(userHash) )
 				return region;
 		}
 		

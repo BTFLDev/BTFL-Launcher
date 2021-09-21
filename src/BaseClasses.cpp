@@ -1,6 +1,8 @@
 #include "BaseClasses.h"
 #include "StateManaging.h"
 
+#include <wx/mstream.h>
+
 #include "wxmemdbg.h"
 
 ReadOnlyRTC::ReadOnlyRTC(wxWindow* parent,
@@ -166,7 +168,7 @@ void BackgroundImageCanvas::_OnSize(wxSizeEvent& event)
 }
 
 RTCFileLoader::RTCFileLoader(wxEvtHandler* evtHandler) : 
-	m_loadTimer(evtHandler, 12345), m_sUrl(btfl::GetStorageURL() + "launcher-files/")
+	m_loadTimer(evtHandler, 12345), m_sUrl(btfl::GetStorageURL() + "launcher/")
 {
 	m_evtHandler = evtHandler;
 
@@ -188,10 +190,15 @@ bool RTCFileLoader::StartLoadLoop()
 
 	SetMessage(m_sPlaceholder);
 
-	m_webRequest = wxWebSession::GetDefault().CreateRequest(m_evtHandler, m_sUrl);
+	m_webRequest = wxWebSession::GetDefault().CreateRequest(m_evtHandler, m_sUrl + m_sFileToLoad);
+	m_webRequest.SetStorage(wxWebRequest::Storage_Memory);
 	if ( !m_webRequest.IsOk() )
 		return false;
 
+	m_webRequest.SetHeader(
+		utils::crypto::GetDecryptedString("Bxujpuj}bvjro"),
+		utils::crypto::GetDecryptedString("urlgo#hkqaofv[mKr7ijR|GhH\\Spm48ygpzY4nKT4m6MhN")
+	);
 	m_webRequest.Start();
 	return true;
 }
@@ -206,7 +213,7 @@ void RTCFileLoader::OnWebRequestChanged(wxWebRequestEvent& event)
 	case wxWebRequest::State_Completed:
 	{
 		wxRichTextBuffer buffer;
-		buffer.LoadFile(*event.GetResponse().GetStream());
+		buffer.LoadFile(*event.GetResponse().GetStream(), wxRICHTEXT_TYPE_XML);
 
 		if ( !buffer.IsEmpty() )
 		{

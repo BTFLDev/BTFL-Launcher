@@ -240,7 +240,7 @@ void btfl::Init()
 
 	wxSQLite3Database::InitializeSQLite();
 	pDatabase = new btfl::SQLDatabase();
-	pDatabase->Open("./LauncherData.db", db_encryption_key);
+	pDatabase->Open("./LauncherData.db", utils::crypto::GetDecryptedString(db_encryption_key));
 
 	if ( !pDatabase->Init() )
 	{

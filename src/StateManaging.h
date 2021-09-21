@@ -8,6 +8,9 @@
 #include <wx/filename.h>
 #include <wx/wxxmlserializer/XmlSerializer.h>
 
+#include "IsoChecking.h"
+#include "Utils.h"
+
 namespace btfl
 {
 	class SQLDatabase : public wxSQLite3Database
@@ -67,8 +70,10 @@ namespace btfl
 	void SaveSettings(btfl::Settings& settings);
 
 	void SetState(LauncherState state);
+	inline wxString GetStorageURL() {
+		return utils::crypto::GetDecryptedString("iwur;20uby/jjwiwcxthsepquhov/fpp0CndehvuL8380DUIM0Gkmht2nctwfu0");
+	}
 
-	inline wxString GetStorageURL() { return "https://btflgame.com/"; }
 
 	void UpdateDatabase(const btfl::SQLEntry& sqlEntry);
 

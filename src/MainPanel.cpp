@@ -68,7 +68,7 @@ MainPanel::MainPanel(wxSFDiagramManager* manager,
 {
 	m_mainFrame = parent;
 
-	m_background.LoadFile("Assets/Background/Main Page Roc@2x.png", wxBITMAP_TYPE_PNG);
+	m_background = utils::crypto::GetDecryptedImage("Assets/Background/Main Page Roc.png");
 	m_logo.LoadFile("Assets/LauncherLogo.png", wxBITMAP_TYPE_PNG);
 	m_bgRatio = (double)m_background.GetWidth() / m_background.GetHeight();
 

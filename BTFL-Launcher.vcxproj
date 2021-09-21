@@ -32,6 +32,7 @@
     <ClInclude Include="src\SQLEntry.h" />
     <ClInclude Include="src\StateManaging.h" />
     <ClInclude Include="src\TransparentButton.h" />
+    <ClInclude Include="src\Utils.h" />
     <ClInclude Include="src\wxmemdbg.h" />
   </ItemGroup>
   <ItemGroup>

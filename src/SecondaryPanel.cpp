@@ -97,7 +97,7 @@ SecondaryPanel::SecondaryPanel(wxSFDiagramManager* manager, MainFrame* parent) :
 	m_sFileToLoad = "disclaimer.xml";
 
 	MAX_BG_OFFSET = 0;
-	m_background.LoadFile("Assets/Background/Subpage@2x.png", wxBITMAP_TYPE_PNG);
+	m_background = utils::crypto::GetDecryptedImage("Assets/Background/Subpage.png");
 	m_bgRatio = (double)m_background.GetWidth() / m_background.GetHeight();
 
 	manager->AcceptShape("All");
