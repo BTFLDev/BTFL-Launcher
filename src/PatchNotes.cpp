@@ -181,7 +181,7 @@ bool LeftSidebar::SetState(btfl::LauncherState state)
 	case btfl::LauncherState::STATE_ToPlayGame:
 	case btfl::LauncherState::STATE_ToUpdateGame:
 	case btfl::LauncherState::STATE_UpdatingGame:
-		m_sFileToLoad = "all.xml";
+		m_sFileToLoad = "notes.xml";
 		break;
 	}
 
