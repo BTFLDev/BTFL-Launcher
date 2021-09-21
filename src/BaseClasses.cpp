@@ -12,6 +12,8 @@ ReadOnlyRTC::ReadOnlyRTC(wxWindow* parent,
 	const wxSize& size,
 	long style) : wxRichTextCtrl(parent, id, value, pos, size, style)
 {
+	SetEditable(false);
+
 	SetCursor(wxCURSOR_DEFAULT);
 	SetTextCursor(wxCURSOR_DEFAULT);
 	Bind(wxEVT_SET_FOCUS, [](wxFocusEvent&) {});
@@ -21,12 +23,12 @@ ReadOnlyRTC::ReadOnlyRTC(wxWindow* parent,
 	Bind(wxEVT_KEY_DOWN, [](wxKeyEvent&) {});
 
 	wxRichTextAttr attr;
-	attr.SetFont(wxFontInfo(12).FaceName("Times New Roman"));
+	attr.SetFont(wxFontInfo(11).FaceName("Lora"));
 	attr.SetAlignment(wxTEXT_ALIGNMENT_JUSTIFIED);
 	attr.SetLeftIndent(64);
 	attr.SetRightIndent(64);
-	attr.SetLineSpacing(10);
-	attr.SetTextColour(wxColour(210, 210, 210));
+	attr.SetLineSpacing(8);
+	attr.SetTextColour(wxColour(255, 255, 255));
 
 	SetBasicStyle(attr);
 	SetBackgroundColour(wxColour(0, 0, 0));

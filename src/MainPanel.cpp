@@ -74,18 +74,19 @@ MainPanel::MainPanel(wxSFDiagramManager* manager,
 
 	m_fileContainer.LoadFile("Assets/Containers/FilePath@2x.png", wxBITMAP_TYPE_PNG);
 	m_fileBmp.LoadFile("Assets/Icon/Browse@2x.png", wxBITMAP_TYPE_PNG);
-	m_fileBmpScale = (double)216 / m_fileContainer.GetWidth();
+	m_fileBmpScale = (double)256 / m_fileContainer.GetWidth();
 
 	manager->AcceptShape("TransparentButton");
 
 	m_mainButton = new TransparentButton("SELECT ISO", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
-	m_mainButton->SetFont(wxFontInfo(20).FaceName("Times New Roman"));
+	m_mainButton->SetFont(wxFontInfo(20).FaceName("Lora"));
+	m_mainButton->SetPadding(35, 12);
 	manager->AddShape(m_mainButton, nullptr, wxDefaultPosition, true, false);
 
 	m_configButton = new TransparentButton("", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
 	m_configButton->SetId(BUTTON_Settings);
 	m_configButton->SetBitmap(wxBitmap("Assets/Icon/Settings@2x.png", wxBITMAP_TYPE_PNG));
-	m_configButton->SetPadding(15, 15);
+	m_configButton->SetPadding(16, 16);
 	manager->AddShape(m_configButton, nullptr, wxDefaultPosition, true, false);
 
 	m_frameButtons = (FrameButtons*)manager->AddShape(CLASSINFO(FrameButtons), false);
@@ -188,10 +189,10 @@ void MainPanel::RepositionAll()
 	m_yFCont = (double)(shapeBB.GetTop() - ((double)m_fileContainer.GetHeight() * m_fileBmpScale) - 10) / m_fileBmpScale;
 
 	m_xFBmp = m_xFCont + 20;
-	m_yFBmp = m_yFCont + (((double)m_fileBmp.GetHeight() * m_fileBmpScale) / 2);
+	m_yFBmp = m_yFCont + (((double)m_fileBmp.GetHeight() * m_fileBmpScale) / 2) - 4;
 
 	m_xFLabel = (double)(m_xFBmp + m_fileBmp.GetWidth() + 10) * m_fileBmpScale;
-	m_yFLabel = ((double)m_yFCont * m_fileBmpScale) + 5;
+	m_yFLabel = ((double)m_yFCont * m_fileBmpScale) + 6;
 
 	wxClientDC dc(this);
 	dc.SetFont(m_fileDescFont);
@@ -273,7 +274,7 @@ void MainPanel::CreateGauge()
 	m_gaugeLabel->SetBorder(*wxTRANSPARENT_PEN);
 	m_gaugeLabel->SetFill(*wxTRANSPARENT_BRUSH);
 	m_gaugeLabel->SetTextColour(wxColour(255, 255, 255, 150));
-	m_gaugeLabel->SetFont(wxFontInfo(12).FaceName("Times New Roman"));
+	m_gaugeLabel->SetFont(wxFontInfo(12).FaceName("Lora"));
 	m_gaugeLabel->SetText("...");
 	m_gaugeLabel->SetStyle(0);
 
@@ -281,7 +282,7 @@ void MainPanel::CreateGauge()
 	m_gaugeProgress->SetBorder(*wxTRANSPARENT_PEN);
 	m_gaugeProgress->SetFill(*wxTRANSPARENT_BRUSH);
 	m_gaugeProgress->SetTextColour(wxColour(255, 255, 255, 255));
-	m_gaugeProgress->SetFont(wxFontInfo(12).FaceName("Times New Roman"));
+	m_gaugeProgress->SetFont(wxFontInfo(12).FaceName("Lora"));
 	m_gaugeProgress->SetText("0% Complete");
 	m_gaugeProgress->SetStyle(0);
 

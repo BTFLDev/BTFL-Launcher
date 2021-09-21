@@ -71,9 +71,9 @@ private:
 	int m_logox = 0, m_logoy = 0;
 
 	wxString m_fileLabel{ "No ISO selected..." }, m_fileDesc{ "View Installation Guide" };
-	wxFont m_fileLabelFont{ wxFontInfo(12).FaceName("Times New Roman") },
-		m_fileDescFont{ wxFontInfo(10).FaceName("Times New Roman") };
-	wxRect m_fileDescRect;
+	wxFont m_fileLabelFont{ wxFontInfo(13).FaceName("Lora") },
+		m_fileDescFont{ wxFontInfo(10).FaceName("Lora") };
+	wxRect m_viewGuideRect;
 	bool m_isHoveringViewGuide = false;
 	bool m_isHoveringFileCont = false;
 	wxColour m_fileDescColour{ 52, 199, 226 };
