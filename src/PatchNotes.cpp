@@ -173,6 +173,7 @@ bool LeftSidebar::SetState(btfl::LauncherState state)
 	case btfl::LauncherState::STATE_ToSelectIso:
 	case btfl::LauncherState::STATE_ToVerifyIso:
 	case btfl::LauncherState::STATE_VerifyingIso:
+	case btfl::LauncherState::STATE_VerificationFailed:
 		m_sFileToLoad = "welcome.xml";
 		break;
 

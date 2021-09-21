@@ -37,12 +37,15 @@ void DisclaimerPanel::PaintBackground(wxDC& dc)
 //////////////////////////// SecondaryPanel /////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
-XS_IMPLEMENT_CLONABLE_CLASS(CheckboxShape, wxSFRoundRectShape);
+XS_IMPLEMENT_CLONABLE_CLASS(CheckboxShape, wxSFCircleShape);
 
-CheckboxShape::CheckboxShape() : wxSFRoundRectShape()
+wxBitmap CheckboxShape::m_colossusEyeBlue = wxBitmap();
+bool CheckboxShape::m_bIsInitialized = false;
+
+CheckboxShape::CheckboxShape() : wxSFCircleShape()
 {
 	SetState(false);
-	SetRadius(2.0);
+	SetFill(wxBrush(*wxTRANSPARENT_BRUSH));
 
 	AddStyle(sfsEMIT_EVENTS);
 
@@ -53,27 +56,56 @@ CheckboxShape::CheckboxShape() : wxSFRoundRectShape()
 	RemoveStyle(sfsSHOW_HANDLES);
 }
 
+void CheckboxShape::Initialize()
+{
+	if ( m_bIsInitialized )
+		return;
+
+	m_colossusEyeBlue.LoadFile("Assets/Icon/Colossus Eye Blue.png", wxBITMAP_TYPE_PNG);
+	
+	m_bIsInitialized = true;
+}
+
 void CheckboxShape::SetState(bool isChecked)
 {
 	if ( isChecked )
-	{
-		SetFill(wxBrush(*wxWHITE));
 		SetBorder(wxPen(wxColour(50, 180, 220), 2));
-	}
 	else
-	{
-		SetFill(*wxTRANSPARENT_BRUSH);
-		SetBorder(wxPen(*wxWHITE, 2 ));
-	}
-
+		SetBorder(wxPen(wxColour(160, 50, 50), 2));
+	
 	m_bIsChecked = isChecked;
 	Refresh();
+}
+
+void CheckboxShape::UpdateBitmapScale()
+{
+	wxRealPoint szRectSize = GetRectSize();
+	wxSize szBitmapSize = m_colossusEyeBlue.GetSize();
+
+	m_dBitmapScaleX = szRectSize.x / szBitmapSize.x;
+	m_dBitmapScaleY = szRectSize.y / szBitmapSize.y;
+}
+
+void CheckboxShape::Draw(wxDC& dc, bool children)
+{
+	wxSFCircleShape::Draw(dc, children);
+	if ( !m_bIsChecked )
+		return;
+
+	wxRealPoint pos = GetAbsolutePosition();
+
+	double dPrevScaleX, dPrevScaleY;
+	dc.GetUserScale(&dPrevScaleX, &dPrevScaleY);
+
+	dc.SetUserScale(m_dBitmapScaleX, m_dBitmapScaleY);
+	dc.DrawBitmap(m_colossusEyeBlue, pos.x / m_dBitmapScaleX, pos.y / m_dBitmapScaleY, true);
+	dc.SetUserScale(dPrevScaleX, dPrevScaleY);
 }
 
 void CheckboxShape::OnLeftClick(const wxPoint& pos)
 {
 	SetState(!m_bIsChecked);
-	wxSFRoundRectShape::OnLeftClick(pos);
+	wxSFCircleShape::OnLeftClick(pos);
 }
 
 wxBEGIN_EVENT_TABLE(SecondaryPanel, BackgroundImageCanvas)
@@ -87,8 +119,23 @@ EVT_SF_SHAPE_LEFT_DOWN(BUTTON_DisclaimerAgree, SecondaryPanel::OnAcceptDisclaime
 EVT_SF_SHAPE_LEFT_DOWN(BUTTON_DisclaimerAgreeVerify, SecondaryPanel::OnAcceptDisclaimer)
 
 EVT_SF_SHAPE_LEFT_DOWN(BUTTON_AutoUpdate, SecondaryPanel::OnAutoUpdateChange)
+EVT_SF_SHAPE_LEFT_DOWN(BUTTON_CloseOnGameLaunch, SecondaryPanel::OnCloseOnGameLaunchChange)
+
+EVT_SF_SHAPE_LEFT_DOWN(BUTTON_Uninstall, SecondaryPanel::OnUninstall)
+
+EVT_MOUSE_CAPTURE_LOST(SecondaryPanel::OnMouseCaptureLost)
 
 wxEND_EVENT_TABLE()
+
+wxString GetSanitizedInstallPathForDisplay(const wxString& path)
+{
+	if ( path.size() < 75 )
+		return path;
+
+	wxString sNewString(path);
+	sNewString.insert(50, " -\n- ");
+	return sNewString;
+}
 
 SecondaryPanel::SecondaryPanel(wxSFDiagramManager* manager, MainFrame* parent) :
 	BackgroundImageCanvas(manager, parent, -1), RTCFileLoader(this)
@@ -120,6 +167,8 @@ SecondaryPanel::SecondaryPanel(wxSFDiagramManager* manager, MainFrame* parent) :
 	m_frameButtons = (FrameButtons*)manager->AddShape(CLASSINFO(FrameButtons), false);
 	m_frameButtons->Init();
 
+	CheckboxShape::Initialize();
+
 	m_verSizer = new wxBoxSizer(wxVERTICAL);
 	SetSizer(m_verSizer);
 
@@ -148,6 +197,10 @@ void SecondaryPanel::ShowDisclaimer()
 		m_verSizer->Add(sizer, wxSizerFlags(1).Expand());
 
 		StartLoadLoop();
+	}
+	else
+	{
+		OnFileLoaded();
 	}
 
 	LayoutSelf();
@@ -203,6 +256,18 @@ void SecondaryPanel::ShowSettings()
 		m_autoUpdate = (CheckboxShape*)pManager->AddShape(CLASSINFO(CheckboxShape), false);
 		m_autoUpdate->SetRectSize(28, 28);
 		m_autoUpdate->SetId(BUTTON_AutoUpdate);
+		m_autoUpdate->UpdateBitmapScale();
+
+		wxSFTextShape* pCloseOnGameLaunchLabel = (wxSFTextShape*)pManager->AddShape(CLASSINFO(wxSFTextShape), false);
+		pCloseOnGameLaunchLabel->SetTextColour(*wxWHITE);
+		pCloseOnGameLaunchLabel->SetFont(wxFontInfo(14).Bold().FaceName("Lora"));
+		SetShapeStyle(pCloseOnGameLaunchLabel);
+		pCloseOnGameLaunchLabel->SetText("Close  Launcher  when  launching  game");
+
+		m_closeSelfOnGameLaunch = (CheckboxShape*)pManager->AddShape(CLASSINFO(CheckboxShape), false);
+		m_closeSelfOnGameLaunch->SetRectSize(28, 28);
+		m_closeSelfOnGameLaunch->SetId(BUTTON_CloseOnGameLaunch);
+		m_closeSelfOnGameLaunch->UpdateBitmapScale();
 
 		m_uninstallButton = new TransparentButton("UNINSTALL", wxDefaultPosition, wxDefaultPosition, 3.0, pManager);
 		m_uninstallButton->SetId(BUTTON_Uninstall);
@@ -214,6 +279,8 @@ void SecondaryPanel::ShowSettings()
 		m_mainSettingsGrid->AppendToGrid(m_installPath);
 		m_mainSettingsGrid->AppendToGrid(pAutoUpdateLabel);
 		m_mainSettingsGrid->AppendToGrid(m_autoUpdate);
+		m_mainSettingsGrid->AppendToGrid(pCloseOnGameLaunchLabel);
+		m_mainSettingsGrid->AppendToGrid(m_closeSelfOnGameLaunch);
 		m_mainSettingsGrid->AppendToGrid(m_uninstallButton);
 
 		ReloadSettings();
@@ -238,6 +305,7 @@ void SecondaryPanel::OnFileLoaded()
 		manager->AddShape(m_disDecline, nullptr, wxDefaultPosition, true, false);
 
 		m_disAgree = new TransparentButton("", wxDefaultPosition, wxDefaultPosition, 3.0, manager);
+		m_disAgree->SetState(Special);
 		m_disAgree->SetFont(wxFontInfo(20).FaceName("Lora"));
 		manager->AddShape(m_disAgree, nullptr, wxDefaultPosition, true, false);
 	}
@@ -253,7 +321,7 @@ void SecondaryPanel::OnFileLoaded()
 
 	if ( m_disAgree )
 	{
-		if ( m_mainFrame->IsIsoSelected() )
+		if ( btfl::GetState() == btfl::STATE_ToVerifyIso )
 		{
 			m_disAgree->SetLabel("ACCEPT & VERIFY");
 			m_disAgree->SetId(BUTTON_DisclaimerAgreeVerify);
@@ -270,13 +338,20 @@ void SecondaryPanel::OnFileLoaded()
 
 void SecondaryPanel::SelectInstallPath()
 {
+	btfl::LauncherState currentState = btfl::GetState();
+	if ( currentState == btfl::STATE_InstallingGame || currentState== btfl::STATE_UpdatingGame )
+	{
+		wxMessageBox("You can't modify your installation path when an installation is in progress!");
+		return;
+	}
+
 	wxDirDialog dirDialog(nullptr, _("Please select a folder..."),
 		"./", wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 	
 	if ( dirDialog.ShowModal() == wxID_OK )
 	{
-		m_installPath->SetText(dirDialog.GetPath());
-		btfl::SetInstallPath(dirDialog.GetPath());
+		btfl::SetInstallPath(dirDialog.GetPath() + "/");
+		m_installPath->SetText(GetSanitizedInstallPathForDisplay(btfl::GetInstallFileName().GetFullPath()));
 		RepositionAll();
 		Refresh();
 	}
@@ -285,6 +360,7 @@ void SecondaryPanel::SelectInstallPath()
 void SecondaryPanel::SetSettings(const btfl::Settings& settings)
 {
 	m_settings.bLookForUpdates = settings.bLookForUpdates;
+	m_settings.bCloseSelfOnGameLaunch = settings.bCloseSelfOnGameLaunch;
 	if ( m_mainSettingsGrid )
 		ReloadSettings();
 }
@@ -301,7 +377,9 @@ void SecondaryPanel::OnFrameButtons(wxSFShapeMouseEvent& event)
 		break;
 
 	case BUTTON_Close:
-		m_mainFrame->Close();
+		if ( btfl::ShouldShutdown() )
+			m_mainFrame->Close();
+	
 		break;
 
 	case BUTTON_Back:
@@ -330,6 +408,46 @@ void SecondaryPanel::OnAutoUpdateChange(wxSFShapeMouseEvent& event)
 	DoSaveSettings();
 }
 
+void SecondaryPanel::OnCloseOnGameLaunchChange(wxSFShapeMouseEvent& event)
+{
+	m_settings.bCloseSelfOnGameLaunch = m_closeSelfOnGameLaunch->IsChecked();
+	DoSaveSettings();
+}
+
+void SecondaryPanel::OnUninstall(wxSFShapeMouseEvent& event)
+{
+	btfl::LauncherState currentState = btfl::GetState();
+	if ( currentState != btfl::STATE_ToPlayGame && currentState != btfl::STATE_ToUpdateGame )
+		return;
+
+	wxMessageDialog dialog(
+		nullptr,
+		"Do you want to remove all of the game files from your computer?",
+		wxString::FromAscii(wxMessageBoxCaptionStr),
+		wxOK | wxCANCEL
+	);
+
+	if ( dialog.ShowModal() != wxID_OK )
+		return;		
+
+	wxFileName fileName = btfl::GetInstallFileName();
+	if ( !wxFileName::Exists(fileName.GetFullPath()) )
+	{
+		wxMessageBox("The game isn't installed or has been moved. Uninstallation unsuccessful.");
+		return;
+	}
+
+	if ( wxFileName::Rmdir(fileName.GetFullPath(), wxPATH_RMDIR_RECURSIVE) )
+	{
+		wxMessageBox("The game has been successfully uninstalled.");
+		btfl::SetState(btfl::STATE_ToInstallGame);
+	}
+	else
+	{
+		wxMessageBox("Something went wrong. Uninstallation unsuccessful");
+	}
+}
+
 void SecondaryPanel::RepositionAll()
 {
 	wxSize size = GetClientSize();
@@ -343,6 +461,8 @@ void SecondaryPanel::RepositionAll()
 
 	shapeSize = m_backArrow->GetRectSize();
 	m_backArrow->MoveTo(10, 10);
+
+	m_dragSafeArea = wxRect(wxPoint(m_backArrow->GetBoundingBox().GetRight(), 0), m_frameButtons->GetBoundingBox().GetLeftBottom());
 
 	if ( m_rtc )
 	{
@@ -387,6 +507,7 @@ void SecondaryPanel::DeleteSettingsShapes()
 	
 	m_installPath = nullptr;
 	m_autoUpdate = nullptr;
+	m_closeSelfOnGameLaunch = nullptr;
 	m_uninstallButton = nullptr;
 	m_mainSettingsGrid = nullptr;
 }
@@ -442,14 +563,41 @@ void SecondaryPanel::OnLeftDown(wxMouseEvent& event)
 {
 	BackgroundImageCanvas::OnLeftDown(event);
 
+	if ( m_dragSafeArea.Contains(event.GetPosition()) )
+	{
+		m_bIsDraggingFrame = true;
+		m_dragStartMousePos = wxGetMousePosition();
+		m_dragStartFramePos = m_mainFrame->GetPosition();
+		CaptureMouse();
+		return;
+	}
+
 	if ( m_bIsHoveringInstallPath )
 	{
 		SelectInstallPath();
 	}
 }
 
+void SecondaryPanel::OnLeftUp(wxMouseEvent& event)
+{
+	BackgroundImageCanvas::OnLeftUp(event);
+
+	if ( HasCapture() )
+	{
+		m_bIsDraggingFrame = false;
+		ReleaseCapture();
+	}
+}
+
 void SecondaryPanel::OnMouseMove(wxMouseEvent& event)
 {
+	if ( m_bIsDraggingFrame )
+	{
+		wxPoint toMove = wxGetMousePosition() - m_dragStartMousePos;
+		m_mainFrame->Move(m_dragStartFramePos + toMove);
+		return;
+	}
+
 	BackgroundImageCanvas::OnMouseMove(event);
 
 	if ( m_mainSettingsGrid )
@@ -470,6 +618,7 @@ void SecondaryPanel::OnMouseMove(wxMouseEvent& event)
 
 void SecondaryPanel::ReloadSettings()
 {
-	m_installPath->SetText(btfl::GetInstallFileName().GetFullPath());
+	m_installPath->SetText(GetSanitizedInstallPathForDisplay(btfl::GetInstallFileName().GetFullPath()));
 	m_autoUpdate->SetState(m_settings.bLookForUpdates);
+	m_closeSelfOnGameLaunch->SetState(m_settings.bCloseSelfOnGameLaunch);
 }

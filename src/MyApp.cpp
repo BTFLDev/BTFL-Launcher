@@ -16,7 +16,7 @@ bool MyApp::OnInit()
 
 	btfl::Init();
 	return true;
-}
+}	
 
 int MyApp::OnExit()
 {

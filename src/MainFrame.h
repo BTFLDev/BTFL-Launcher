@@ -34,6 +34,7 @@ public:
 		long style = wxDEFAULT_FRAME_STYLE,
 		const wxString& name = wxFrameNameStr);
 
+	MainPanel* GetMainPanel() { return m_mainPanel; }
 	SecondaryPanel* GetSecondaryPanel() { return m_seconPanel; }
 
 	void LoadPatchNotes() { m_patchNotesWindow->StartLoadLoop(); }

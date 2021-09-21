@@ -51,29 +51,53 @@ namespace btfl
 		STATE_ToPlayGame,
 		STATE_LaunchingGame,
 		STATE_ToUpdateGame,
-		STATE_UpdatingGame
+		STATE_UpdatingGame,
+
+		//These were added late to the party he
+		STATE_VerificationFailed
 	};
 
 	struct Settings: public xsSerializable
 	{
 		bool bLookForUpdates = true;
+		bool bCloseSelfOnGameLaunch = true;
 
 		Settings()
 		{
-			XS_SERIALIZE_BOOL(bLookForUpdates, "look_for_updates");
+			XS_SERIALIZE(bLookForUpdates, "look_for_updates");
+			XS_SERIALIZE(bCloseSelfOnGameLaunch, "close_on_game_launch");
 		}
 	};
 
 	void Init();
 	void ShutDown();
+	bool ShouldShutdown();
 	void LoadLauncher(btfl::SQLDatabase* database);
 	void SaveSettings(btfl::Settings& settings);
 
 	void SetState(LauncherState state);
+	LauncherState GetState();
+	void RestoreLastState();
+
+	void SetIsoRegion(iso::ISO_Region region);
+	iso::ISO_Region GetIsoRegion();
+
+	btfl::Settings GetSettings();
+
+	wxString GetInstalledGameVersion();
+	wxString GetInstalledLauncherVersion();
+
+	void SetLatestGameVerstion(const wxString& version);
+	wxString GetLatestGameVersion();
+
+	bool ShouldAutoUpdateGame();
+
 	inline wxString GetStorageURL() {
-		return utils::crypto::GetDecryptedString("iwur;20uby/jjwiwcxthsepquhov/fpp0CndehvuL8380DUIM0Gkmht2nctwfu0");
+		return utils::crypto::GetDecryptedString("iwur;20uby/jjwiwcxthsepquhov/fpp0CndehvuL8380DUIM0Gkmht2nctwfu0"); 
 	}
 
+	void DoUpdateLauncher();
+	void DeleteInstallerIfPresent();
 
 	void UpdateDatabase(const btfl::SQLEntry& sqlEntry);
 

@@ -4,6 +4,13 @@
 
 #include <wx\wxsf\wxShapeFramework.h>
 
+enum TBState
+{
+	Idle,
+	Processing,
+	Special
+};
+
 class TransparentButton : public wxSFRoundRectShape
 {
 protected:
@@ -36,6 +43,8 @@ public:
 	void SetBitmap(const wxBitmap& bmp);
 
 	inline void SetTextColour(const wxColour& colour) { m_textColour = colour; }
+
+	void SetState(TBState style);
 
 	void SetPadding(int x, int y);
 	void GetPadding(int* x, int* y);
