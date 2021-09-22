@@ -233,14 +233,14 @@ void MainPanel::RepositionAll()
 	if ( m_updateButton )
 	{
 		m_updateButton->RecalculateSelf();
-		m_updateButton->MoveTo(mainButtonRect.GetTopRight() + wxPoint(15, 0));
+		m_updateButton->MoveTo(mainButtonRect.GetTopRight() + wxPoint(10, 0));
 		shapeRect = m_updateButton->GetBoundingBox();
 	}
 
 	int xPadding, yPadding;
 	m_configButton->GetPadding(&xPadding, &yPadding);
 	m_configButton->RecalculateSelf(wxSize(mainButtonRect.height - (xPadding * 2), mainButtonRect.height - (yPadding * 2)));
-	m_configButton->MoveTo(shapeRect.GetTopRight() + wxPoint(15, 0));
+	m_configButton->MoveTo(shapeRect.GetTopRight() + wxPoint(10, 0));
 
 	shapeRect = m_frameButtons->GetBoundingBox();
 	m_frameButtons->MoveTo(size.x - shapeRect.width - 10, 10);
