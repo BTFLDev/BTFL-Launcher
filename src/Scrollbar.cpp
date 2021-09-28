@@ -115,7 +115,7 @@ void CustomRTCScrollbar::DoScroll(int pos)
 
 	m_currentThumbRect.SetY(m_nCurrentPos);
 	m_rtc->Freeze();
-	m_rtc->Scroll(0, ((double)m_nCurrentPos / m_dRatio) / m_rtc->GetLineHeight());
+	m_rtc->Scroll(0, (double(m_nCurrentPos) / m_dRatio) / m_rtc->GetLineHeight());
 	m_rtc->Thaw();
 	m_rtc->Update();
 
@@ -186,7 +186,8 @@ void CustomRTCScrollbar::OnLeftDown(wxMouseEvent& event)
 		m_bIsDragging = true;
 		CaptureMouse();
 		m_nDragOffset = pos.y - m_nCurrentPos;
-	} else
+	} 
+	else
 	{
 		int toScroll = m_nCurrentPos;
 

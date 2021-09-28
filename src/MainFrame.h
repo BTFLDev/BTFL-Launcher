@@ -37,8 +37,6 @@ public:
 	MainPanel* GetMainPanel() { return m_mainPanel; }
 	SecondaryPanel* GetSecondaryPanel() { return m_seconPanel; }
 
-	void LoadPatchNotes() { m_patchNotesWindow->StartLoadLoop(); }
-
 	void SetState(btfl::LauncherState state);
 
 	void ShowMainPanel();

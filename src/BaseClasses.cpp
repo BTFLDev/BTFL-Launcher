@@ -223,12 +223,8 @@ void RTCFileLoader::OnWebRequestChanged(wxWebRequestEvent& event)
 		if ( !buffer.IsEmpty() )
 		{
 			buffer.SetBasicStyle(m_rtc->GetBasicStyle());
-
 			m_rtc->GetBuffer() = buffer;
-			m_rtc->LayoutContent();
-			m_rtc->Refresh();
-			m_rtc->Update();
-			m_scrollbar->RecalculateSelf();
+			LayoutRTC();
 		}
 
 		OnFileLoaded();
@@ -241,6 +237,14 @@ void RTCFileLoader::OnWebRequestChanged(wxWebRequestEvent& event)
 		m_loadTimer.Start(1000);
 		break;
 	}
+}
+
+void RTCFileLoader::LayoutRTC()
+{
+	m_rtc->LayoutContent();
+	m_rtc->Refresh();
+	m_rtc->Update();
+	m_scrollbar->RecalculateSelf();
 }
 
 void RTCFileLoader::OnLoadTimer(wxTimerEvent& event)

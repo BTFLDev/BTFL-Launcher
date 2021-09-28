@@ -109,6 +109,26 @@ void HyperlinkPanel::OnLeaveWindow(wxMouseEvent& event)
 ///////////////////////////////////////////////////////////////////////
 
 
+LeftSidebarRTC::LeftSidebarRTC(wxWindow* parent, const wxString& fileToLoad) :
+	wxPanel(parent, -1, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE), RTCFileLoader(this)
+{
+	m_rtc = new ReadOnlyRTC(this, -1, "", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+	m_rtc->ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
+	m_rtc->SetScrollRate(15, 15);
+
+	m_scrollbar = new CustomRTCScrollbar(this, m_rtc, -1);
+
+	m_sFileToLoad = fileToLoad;
+
+	wxBoxSizer* pSizer = new wxBoxSizer(wxHORIZONTAL);
+	pSizer->AddSpacer(5);
+	pSizer->Add(m_scrollbar, wxSizerFlags(0).Expand());
+	pSizer->Add(m_rtc, wxSizerFlags(1).Expand());
+
+	SetSizer(pSizer);
+}
+
+
 BEGIN_EVENT_TABLE(LeftSidebar, wxScrolledWindow)
 EVT_MOTION(LeftSidebar::OnMove)
 EVT_PAINT(LeftSidebar::OnPaint)
@@ -118,7 +138,7 @@ LeftSidebar::LeftSidebar(wxWindow* parent,
 	wxWindowID id,
 	const wxPoint& pos,
 	const wxSize& size,
-	long style) : wxPanel(parent, id, pos, size, style), RTCFileLoader(this)
+	long style) : wxPanel(parent, id, pos, size, style)
 {
 	m_mainFrame = (MainFrame*)parent;
 
@@ -126,18 +146,54 @@ LeftSidebar::LeftSidebar(wxWindow* parent,
 
 	wxRichTextBuffer::AddHandler(new wxRichTextXMLHandler);
 
-	m_rtc = new ReadOnlyRTC(this, -1, "", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
-	m_rtc->ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
-	m_rtc->SetScrollRate(15, 15);
+	m_welcomePage = new LeftSidebarRTC(this, "welcome.xml");
+	m_patchNotesPage = new LeftSidebarRTC(this, "notes.xml");
+	m_welcomePage->Show();
+	m_patchNotesPage->Hide();
 
-	m_rtc->SetValue("\nFetching latest content...");
+	m_welcomeLabel = new wxStaticText(this, -1, "Welcome");
+	m_welcomeLabel->SetForegroundColour(wxColour(250, 250, 250));
+	m_welcomeLabel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) { this->ShowWelcome(); });
+	m_welcomeLabel->Bind(wxEVT_ENTER_WINDOW, [&](wxMouseEvent&)
+		{
+			m_welcomeLabel->SetForegroundColour(wxColour(200, 200, 200));
+			m_welcomeLabel->Refresh();
+			m_welcomeLabel->Update();
+		}
+	);
+	m_welcomeLabel->Bind(wxEVT_LEAVE_WINDOW, [&](wxMouseEvent& event)
+		{
+			m_welcomeLabel->SetForegroundColour(wxColour(250, 250, 250));
+			m_welcomeLabel->Refresh();
+			m_welcomeLabel->Update();
+		}
+	);
+	m_welcomeLabel->SetCursor(wxCURSOR_CLOSED_HAND);
 
-	m_scrollbar = new CustomRTCScrollbar(this, m_rtc, -1);
-	wxBoxSizer* rtcSizer = new wxBoxSizer(wxHORIZONTAL);
-	rtcSizer->AddSpacer(5);
-	rtcSizer->Add(m_scrollbar, wxSizerFlags(0).Expand());
-	rtcSizer->AddSpacer(5);
-	rtcSizer->Add(m_rtc, wxSizerFlags(1).Expand());
+	m_patchNotesLabel = new wxStaticText(this, -1, "Patch Notes");
+	m_patchNotesLabel->SetFont(wxFontInfo(10).FaceName("Lora"));
+	m_patchNotesLabel->SetForegroundColour(wxColour(250, 250, 250));
+	m_patchNotesLabel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) { this->ShowPatchNotes(); });
+	m_patchNotesLabel->Bind(wxEVT_ENTER_WINDOW, [&](wxMouseEvent&)
+		{
+			m_patchNotesLabel->SetForegroundColour(wxColour(200, 200, 200));
+			m_patchNotesLabel->Refresh();
+			m_patchNotesLabel->Update();
+		}
+	);
+	m_patchNotesLabel->Bind(wxEVT_LEAVE_WINDOW, [&](wxMouseEvent& event)
+		{
+			m_patchNotesLabel->SetForegroundColour(wxColour(250, 250, 250));
+			m_patchNotesLabel->Refresh();
+			m_patchNotesLabel->Update();
+		}
+	);
+	m_patchNotesLabel->SetCursor(wxCURSOR_CLOSED_HAND);
+
+	wxBoxSizer* pLabelSizer = new wxBoxSizer(wxHORIZONTAL);
+	pLabelSizer->Add(m_welcomeLabel);
+	pLabelSizer->AddStretchSpacer(1);
+	pLabelSizer->Add(m_patchNotesLabel);
 
 	HyperlinkPanel* website = new HyperlinkPanel(this, "http://btflgame.com", wxBitmap("Assets/Icon/Website@2x.png", wxBITMAP_TYPE_PNG), wxSize(26, 26));
 	website->SetBackgroundColour(wxColour(0, 0, 0));
@@ -159,34 +215,75 @@ LeftSidebar::LeftSidebar(wxWindow* parent,
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	sizer->AddSpacer(5);
-	sizer->Add(rtcSizer, wxSizerFlags(1).Expand());
+	sizer->Add(m_welcomePage, wxSizerFlags(1).Expand());
+	sizer->Add(m_patchNotesPage, wxSizerFlags(1).Expand());
+	sizer->AddSpacer(2);
+	sizer->Add(pLabelSizer, wxSizerFlags(0).Expand().Border(wxALL, 10));
 	sizer->Add(socialSizer, wxSizerFlags(0).CenterHorizontal());
 
 	SetSizer(sizer);
+
+	m_welcomePage->StartLoadLoop();
+	m_patchNotesPage->StartLoadLoop();
 }
 
-bool LeftSidebar::SetState(btfl::LauncherState state)
+void LeftSidebar::SetState(btfl::LauncherState state)
 {
-	wxString lastFile = m_sFileToLoad;
 	switch ( state )
 	{
 	case btfl::LauncherState::STATE_ToSelectIso:
 	case btfl::LauncherState::STATE_ToVerifyIso:
 	case btfl::LauncherState::STATE_VerifyingIso:
 	case btfl::LauncherState::STATE_VerificationFailed:
-		m_sFileToLoad = "welcome.xml";
-		break;
+		ShowWelcome();
 
 	case btfl::LauncherState::STATE_ToInstallGame:
 	case btfl::LauncherState::STATE_InstallingGame:
 	case btfl::LauncherState::STATE_ToPlayGame:
 	case btfl::LauncherState::STATE_ToUpdateGame:
 	case btfl::LauncherState::STATE_UpdatingGame:
-		m_sFileToLoad = "notes.xml";
-		break;
+		ShowPatchNotes();
 	}
+}
 
-	return lastFile != m_sFileToLoad;
+void LeftSidebar::ShowWelcome()
+{
+	if ( m_bIsWelcomeShown )
+		return;
+
+	Freeze();
+	
+	m_patchNotesPage->Hide();
+	m_welcomePage->Show();
+
+	m_patchNotesLabel->SetFont(wxFontInfo(10).FaceName("Lora"));
+	m_welcomeLabel->SetFont(wxFontInfo(10).FaceName("Lora").Underlined());
+
+	GetSizer()->Layout();
+	m_welcomePage->LayoutRTC();
+	Thaw();
+
+	m_bIsWelcomeShown = true;
+}
+
+void LeftSidebar::ShowPatchNotes()
+{
+	if ( !m_bIsWelcomeShown )
+		return;
+
+	Freeze();
+
+	m_welcomePage->Hide();
+	m_patchNotesPage->Show();
+
+	m_welcomeLabel->SetFont(wxFontInfo(10).FaceName("Lora"));
+	m_patchNotesLabel->SetFont(wxFontInfo(10).FaceName("Lora").Underlined());
+
+	GetSizer()->Layout();
+	m_patchNotesPage->LayoutRTC();
+	Thaw();
+
+	m_bIsWelcomeShown = false;
 }
 
 void LeftSidebar::OnPaint(wxPaintEvent& event)
@@ -194,7 +291,11 @@ void LeftSidebar::OnPaint(wxPaintEvent& event)
 	wxPaintDC dc(this);
 
 	wxSize size = GetClientSize();
-	wxRect rtcRect(m_rtc->GetRect());
+	wxRect rtcRect;
+	if ( m_bIsWelcomeShown )
+		rtcRect = m_welcomePage->GetRect();
+	else
+		rtcRect = m_patchNotesPage->GetRect();
 
 	int middleX = size.x / 2;
 
@@ -205,6 +306,9 @@ void LeftSidebar::OnPaint(wxPaintEvent& event)
 
 	dc.GradientFillLinear(wxRect(wxPoint(0, rtcRect.GetBottom() + 1), gradientHalfSize), black, gray);
 	dc.GradientFillLinear(wxRect(wxPoint(middleX, rtcRect.GetBottom() + 1), gradientHalfSize), gray, black);
+
+	dc.GradientFillLinear(wxRect(wxPoint(0, m_welcomeLabel->GetRect().GetBottom() + 10), gradientHalfSize), black, gray);
+	dc.GradientFillLinear(wxRect(wxPoint(middleX, m_welcomeLabel->GetRect().GetBottom() + 10), gradientHalfSize), gray, black);
 
 	dc.GradientFillLinear(wxRect(wxPoint(0, size.y - 1), gradientHalfSize), black, gray);
 	dc.GradientFillLinear(wxRect(wxPoint(middleX, size.y - 1), gradientHalfSize), gray, black);

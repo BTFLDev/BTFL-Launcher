@@ -102,6 +102,8 @@ public:
 	bool StartLoadLoop();
 	void SetMessage(const wxString& message);
 
+	void LayoutRTC();
+
 	void OnWebRequestChanged(wxWebRequestEvent& event);
 	void OnLoadTimer(wxTimerEvent& event);
 

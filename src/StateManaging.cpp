@@ -301,7 +301,7 @@ iso::ISO_Region isoRegion = iso::ISO_Region::ISO_Invalid;
 
 wxFileName installFileName;
 wxString sInstalledGameVersion;
-wxString sInstalledLauncherVersion = "v1.0.9";
+wxString sInstalledLauncherVersion = "v1.0.11";
 wxString sLatestGameVersion;
 
 MainFrame* pMainFrame;

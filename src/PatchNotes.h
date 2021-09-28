@@ -51,9 +51,22 @@ public:
 ///////////////////////////////////////////////////////////////////////
 
 
-class LeftSidebar : public wxPanel, public RTCFileLoader
+class LeftSidebarRTC : public wxPanel, public RTCFileLoader {
+public:
+	LeftSidebarRTC(wxWindow* parent, const wxString& fileToLoad);
+};
+
+
+class LeftSidebar : public wxPanel
 {
 	MainFrame* m_mainFrame = nullptr;
+	LeftSidebarRTC* m_welcomePage = nullptr,
+		* m_patchNotesPage = nullptr;
+
+	wxStaticText* m_welcomeLabel = nullptr,
+		* m_patchNotesLabel = nullptr;
+
+	bool m_bIsWelcomeShown = true;
 	
 public:
 	LeftSidebar(wxWindow* parent,
@@ -62,7 +75,10 @@ public:
 		const wxSize& size = wxDefaultSize,
 		long style = wxBORDER_NONE);
 
-	bool SetState(btfl::LauncherState state);
+	void SetState(btfl::LauncherState state);
+
+	void ShowWelcome();
+	void ShowPatchNotes();
 
 	void OnPaint(wxPaintEvent& event);
 	void OnMove(wxMouseEvent& event);

@@ -77,8 +77,7 @@ MainFrame::MainFrame(wxWindow* parent,
 void MainFrame::SetState(btfl::LauncherState state)
 {
 	m_mainPanel->SetState(state);	
-	if ( m_patchNotesWindow->SetState(state) )
-		LoadPatchNotes();
+	m_patchNotesWindow->SetState(state);
 }
 
 void MainFrame::ShowMainPanel()
