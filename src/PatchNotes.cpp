@@ -152,6 +152,7 @@ LeftSidebar::LeftSidebar(wxWindow* parent,
 	m_patchNotesPage->Hide();
 
 	m_welcomeLabel = new wxStaticText(this, -1, "Welcome");
+	m_welcomeLabel->SetFont(wxFontInfo(10).FaceName("Lora").Underlined());
 	m_welcomeLabel->SetForegroundColour(wxColour(250, 250, 250));
 	m_welcomeLabel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) { this->ShowWelcome(); });
 	m_welcomeLabel->Bind(wxEVT_ENTER_WINDOW, [&](wxMouseEvent&)
