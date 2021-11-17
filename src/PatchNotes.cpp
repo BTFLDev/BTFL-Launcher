@@ -234,16 +234,15 @@ void LeftSidebar::SetState(btfl::LauncherState state)
 	{
 	case btfl::LauncherState::STATE_ToSelectIso:
 	case btfl::LauncherState::STATE_ToVerifyIso:
-	case btfl::LauncherState::STATE_VerifyingIso:
 	case btfl::LauncherState::STATE_VerificationFailed:
 		ShowWelcome();
+		break;
 
 	case btfl::LauncherState::STATE_ToInstallGame:
-	case btfl::LauncherState::STATE_InstallingGame:
 	case btfl::LauncherState::STATE_ToPlayGame:
 	case btfl::LauncherState::STATE_ToUpdateGame:
-	case btfl::LauncherState::STATE_UpdatingGame:
 		ShowPatchNotes();
+		break;
 	}
 }
 
