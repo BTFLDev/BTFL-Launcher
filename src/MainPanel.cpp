@@ -77,7 +77,7 @@ MainPanel::MainPanel(wxSFDiagramManager* manager,
 
 	Bind(wxEVT_WEBREQUEST_STATE, &MainPanel::OnWebRequestState, this);
 
-	m_background = utils::crypto::GetDecryptedImage("Assets/Background/Main Page Roc.png");
+	m_background = utils::crypto::GetDecryptedImage(GetRandomBgImagePath());
 	m_logo.LoadFile("Assets/LauncherLogo.png", wxBITMAP_TYPE_PNG);
 	m_bgRatio = (double)m_background.GetWidth() / m_background.GetHeight();
 
@@ -745,6 +745,17 @@ void MainPanel::UnzipGameFiles()
 		}
 	);
 	thread.detach();
+}
+
+wxString MainPanel::GetRandomBgImagePath()
+{
+	srand(time(0));
+
+	switch ( rand() % 1 + 1 )
+	{
+	case 1:	return "Assets/Background/Main Page Roc.png";
+	default: "Assets/Background/Main Page Roc.png";
+	}
 }
 
 void MainPanel::OnFrameButtons(wxSFShapeMouseEvent& event)

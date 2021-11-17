@@ -164,6 +164,8 @@ public:
 
 	void UnzipGameFiles();
 
+	wxString GetRandomBgImagePath();
+
 	// wxSF event handlers.
 	void OnFrameButtons(wxSFShapeMouseEvent& event);
 	void OnSelectIso(wxSFShapeMouseEvent& event);
