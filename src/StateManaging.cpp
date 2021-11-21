@@ -10,6 +10,7 @@
 #include <wx/msgdlg.h>
 #include <wx/mimetype.h>
 #include <wx/webrequest.h>
+#include <wx/progdlg.h>
 
 #include <thread>
 
@@ -311,7 +312,7 @@ InstallerDownloader* installerDownloader;
 class InstallerDownloader : public wxEvtHandler
 {
 	wxWebRequest m_installerRequest;
-	wxBusyCursor* m_pBusyCursor = nullptr;
+	wxProgressDialog* m_pProgressDialog = nullptr;
 
 public:
 	InstallerDownloader()
@@ -334,7 +335,7 @@ public:
 			utils::crypto::GetDecryptedString("urlgo#hkqaofv[mKr7ijR|GhH\\Spm48ygpzY4nKT4m6MhN"));
 		m_installerRequest.Start();
 
-		m_pBusyCursor = new wxBusyCursor;
+		StartProgress();
 		pMainFrame->Hide();
 	}
 
@@ -344,6 +345,7 @@ public:
 		{
 		case wxWebRequest::State_Completed:
 		{
+			EndProgress();
 			wxFileName fileName(event.GetDataFile());
 			fileName.SetName("Temp-Installer");
 			fileName.SetExt("exe");
@@ -368,11 +370,25 @@ public:
 		case wxWebRequest::State_Unauthorized:
 		case wxWebRequest::State_Failed:
 		case wxWebRequest::State_Cancelled:
+			EndProgress();
 			pMainFrame->Show();
-			wxDELETE(m_pBusyCursor);
 			wxMessageBox("There was a problem when updating the application. Please try again later");
 			break;
 		}
+	}
+
+private:
+	void StartProgress()
+	{
+		m_pProgressDialog = new wxProgressDialog("Downloading update...", "This may take a few seconds...");
+		m_pProgressDialog->SetIcon(wxICON(aaaaBTFLIconNoText));
+		m_pProgressDialog->Pulse();
+	}
+	
+	void EndProgress() 
+	{
+		m_pProgressDialog->Hide();
+		m_pProgressDialog->Destroy();
 	}
 };
 
