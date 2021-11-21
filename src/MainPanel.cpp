@@ -367,7 +367,7 @@ void MainPanel::DestroyGauge()
 	m_gaugeProgress = nullptr;
 }
 
-void MainPanel::UpdateGauge(int currentUnit, const wxString & message)
+void MainPanel::UpdateGauge(int currentUnit, const wxString& message, bool refresh)
 {
 	if ( !m_gauge )
 		return;
@@ -377,9 +377,11 @@ void MainPanel::UpdateGauge(int currentUnit, const wxString & message)
 	m_gaugeProgress->SetText(std::to_string(m_gauge->GetCurrentPercent()) + "% Complete");
 	m_gauge->Refresh(true);
 
-	RepositionAll();
-	Refresh();
-	Update();
+	if ( refresh )
+	{
+		Refresh();
+		Update();
+	}
 }
 
 void MainPanel::CreateUpdateButton()
@@ -406,7 +408,7 @@ void MainPanel::DestroyUpdateButton()
 	m_updateButton = nullptr;
 }
 
-void MainPanel::OnGaugeTimer(wxTimerEvent& event)
+void MainPanel::DoCheckGauge(bool refresh)
 {
 	wxMutexLocker locker(m_nextGaugeValueMutex);
 
@@ -416,14 +418,14 @@ void MainPanel::OnGaugeTimer(wxTimerEvent& event)
 	{
 		int nValue = (m_webRequest.GetBytesReceived() * 90) /
 			m_webRequest.GetBytesExpectedToReceive();
-	
+
 		if ( nValue != 90 )
 			m_nextGaugeValue = nValue;
 	}
 
 	if ( m_nextGaugeValue != -1 )
 	{
-		UpdateGauge(m_nextGaugeValue, m_nextGaugeLabel);
+		UpdateGauge(m_nextGaugeValue, m_nextGaugeLabel, refresh);
 		m_nextGaugeValue = -1;
 
 		if ( m_gauge->GetCurrentPercent() >= 100 )
@@ -902,6 +904,9 @@ void MainPanel::OnMouseMove(wxMouseEvent& event)
 		m_mainFrame->Move(m_dragStartFramePos + toMove);
 		return;
 	}
+
+	if ( m_gauge )
+		DoCheckGauge(false);
 
 	BackgroundImageCanvas::OnMouseMove(event);
 

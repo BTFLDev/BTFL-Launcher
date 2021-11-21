@@ -146,11 +146,12 @@ public:
 	void DestroyUpdateButton();
 
 	// Updates the gauge and refreshes the screen. "Message" is assiged to m_gaugeLabel.
-	void UpdateGauge(int currentUnit, const wxString& message);
+	void UpdateGauge(int currentUnit, const wxString& message, bool refresh);
 
 	// Called every 1ms so that the program checks whether it needs to update the gauge
 	// with the value specified in m_nextGaugeValue.
-	void OnGaugeTimer(wxTimerEvent& event);
+	void OnGaugeTimer(wxTimerEvent& event) { DoCheckGauge(true); }
+	void DoCheckGauge(bool refresh);
 
 	// Called when OnGaugeTimer receives a m_nextGaugeValue that results in a 100 percent
 	// completion in the gauge. It then takes into account the current value in m_gaugeResult
