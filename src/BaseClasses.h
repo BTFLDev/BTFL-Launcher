@@ -50,6 +50,8 @@ protected:
 	wxPoint m_mousePosOnEnter{ 0,0 };
 	wxTimer m_bgAnimTimer;
 
+	bool m_bIsBgPosResetting = false;
+
 public:
 	BackgroundImageCanvas(wxSFDiagramManager* manager,
 		wxWindow* parent,
@@ -72,7 +74,9 @@ public:
 	void OnEnterWindow(wxMouseEvent& event);
 	void OnLeaveWindow(wxMouseEvent& event);
 
-	void OnBgAnimTimer(wxTimerEvent& event);
+	void OnBgAnimTimer(wxTimerEvent& event) { DoAnimateBackground(true); }
+	virtual void DoAnimateBackground(bool refresh);
+	virtual bool ShouldStopAnimatingBackground() { return !m_bIsBgPosResetting; }
 
 	void _OnSize(wxSizeEvent& event);
 };

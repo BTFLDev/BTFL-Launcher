@@ -127,7 +127,7 @@ void BackgroundImageCanvas::OnMouseMove(wxMouseEvent& event)
 
 void BackgroundImageCanvas::OnEnterWindow(wxMouseEvent& event)
 {
-	m_bgAnimTimer.Stop();
+	m_bIsBgPosResetting = false;
 	m_mousePosOnEnter = event.GetPosition();
 }
 
@@ -140,30 +140,40 @@ void BackgroundImageCanvas::OnLeaveWindow(wxMouseEvent& event)
 	wxSFShapeCanvas::OnMouseMove(event);
 	event.SetPosition(posCache);
 
-	m_bgAnimTimer.Start(1);
+	m_bIsBgPosResetting = true;
+	m_bgAnimTimer.Start(8);
 }
 
-void BackgroundImageCanvas::OnBgAnimTimer(wxTimerEvent& event)
+void BackgroundImageCanvas::DoAnimateBackground(bool refresh)
 {
-	if ( m_bgxoffset > 1 )
-		m_bgxoffset -= 2;
-	else if ( m_bgxoffset < -1 )
-		m_bgxoffset += 2;
-
-	if ( m_bgyoffset > 1 )
-		m_bgyoffset -= 2;
-	else if ( m_bgyoffset < -1 )
-		m_bgyoffset += 2;
-
-	if ( (m_bgxoffset > -2 && m_bgxoffset < 2) && (m_bgyoffset > -2 && m_bgyoffset < 2) )
+	if ( m_bIsBgPosResetting )
 	{
-		m_bgxoffset = 0;
-		m_bgyoffset = 0;
-		m_bgAnimTimer.Stop();
+		if ( m_bgxoffset > 1 )
+			m_bgxoffset -= 2;
+		else if ( m_bgxoffset < -1 )
+			m_bgxoffset += 2;
+
+		if ( m_bgyoffset > 1 )
+			m_bgyoffset -= 2;
+		else if ( m_bgyoffset < -1 )
+			m_bgyoffset += 2;
+
+		if ( (m_bgxoffset > -2 && m_bgxoffset < 2) && (m_bgyoffset > -2 && m_bgyoffset < 2) )
+		{
+			m_bgxoffset = 0;
+			m_bgyoffset = 0;
+			m_bIsBgPosResetting = false;
+		}
 	}
 
-	Refresh();
-	Update();
+	if ( ShouldStopAnimatingBackground() )
+		m_bgAnimTimer.Stop();
+
+	if ( refresh )
+	{
+		Refresh();
+		Update();
+	}
 }
 
 void BackgroundImageCanvas::_OnSize(wxSizeEvent& event)
