@@ -56,7 +56,9 @@ enum
 
 	WEB_Install,
 	WEB_LookForLauncherUpdate,
-	WEB_LookForGameUpdate
+	WEB_LookForGameUpdate,
+
+	TIMER_BgChange,
 };
 
 enum GaugeResult
@@ -121,6 +123,10 @@ private:
 	wxPoint m_versionLabelPos;
 	wxFont m_versionFont{ wxFontInfo(8).FaceName("Lora") };
 
+	wxTimer m_bgChangeTimer;
+
+	wxColour m_bgFadeColour{ 0,0,0,0 };
+	bool m_bDoFadeOut = false, m_bDoFadeIn = false;
 	bool m_bCanChangeBackground = true;
 
 public:
@@ -183,6 +189,11 @@ public:
 	virtual void OnLeftDown(wxMouseEvent& event) override;
 	virtual void OnLeftUp(wxMouseEvent& event) override;
 
+	void OnBgChangeTimer(wxTimerEvent& event);
+	virtual void DoAnimateBackground(bool refresh) override;
+	virtual bool ShouldStopAnimatingBackground() override { return !m_bIsBgPosResetting && !m_bDoFadeOut && !m_bDoFadeIn; }
+
+	virtual void DrawBackground(wxDC& dc, bool fromPaint) override;
 	virtual void DrawForeground(wxDC& dc, bool fromPaint) override;
 
 	inline void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt)

@@ -99,6 +99,11 @@ MainPanel::MainPanel(wxSFDiagramManager* manager,
 
 	m_frameButtons = (FrameButtons*)manager->AddShape(CLASSINFO(FrameButtons), false);
 	m_frameButtons->Init();
+
+	m_bgChangeTimer.SetOwner(&m_bgChangeTimer, TIMER_BgChange);
+	m_bgChangeTimer.Bind(wxEVT_TIMER, &MainPanel::OnBgChangeTimer, this);
+
+	m_bgChangeTimer.StartOnce(7000);
 }
 
 void MainPanel::SetState(btfl::LauncherState state)
@@ -758,16 +763,13 @@ void MainPanel::ChangeToRandomBgImage()
 		return;
 
 	srand(time(0));
-	int nCurrentBackground;
+	int nCurrentBackground = !m_vShownBackgrounds.IsEmpty() ? m_vShownBackgrounds.Last() : -1;
 	int nNewBackground = -1;
-
-	if ( !m_vShownBackgrounds.IsEmpty() ) nCurrentBackground = m_vShownBackgrounds.Last();
-	else nCurrentBackground = -1;
 
 	if ( m_vShownBackgrounds.Count() == 6 )
 		m_vShownBackgrounds.Clear();
 
-	do { nNewBackground = rand() % 6 + 1; } while ( m_vShownBackgrounds.Index(nNewBackground) != wxNOT_FOUND  && nNewBackground == nCurrentBackground);
+	do { nNewBackground = rand() % 6 + 1; } while ( m_vShownBackgrounds.Index(nNewBackground) != wxNOT_FOUND  || nNewBackground == nCurrentBackground);
 	m_vShownBackgrounds.Add(nNewBackground);
 	
 	switch ( nNewBackground )
@@ -865,6 +867,18 @@ void MainPanel::OnSettings(wxSFShapeMouseEvent& event)
 	m_mainFrame->ShowSettings();
 }
 
+void MainPanel::DrawBackground(wxDC& dc, bool fromPaint)
+{
+	BackgroundImageCanvas::DrawBackground(dc, fromPaint);
+
+	if ( m_bgFadeColour.Alpha() != 0 )
+	{
+		dc.SetBrush(wxBrush(m_bgFadeColour));
+		dc.DrawRectangle(wxPoint(0, 0), GetSize());
+		dc.SetBrush(wxNullBrush);
+	}
+}
+
 void MainPanel::DrawForeground(wxDC& dc, bool fromPaint)
 {
 	// Draw the logo independent of the background image.
@@ -908,6 +922,7 @@ void MainPanel::OnMouseMove(wxMouseEvent& event)
 	if ( m_gauge )
 		DoCheckGauge(false);
 
+	DoAnimateBackground(false);
 	BackgroundImageCanvas::OnMouseMove(event);
 
 	bool bIsHoveringViewGuide = m_viewGuideRect.Contains(event.GetPosition());
@@ -976,4 +991,48 @@ void MainPanel::OnLeftUp(wxMouseEvent& event)
 		m_bIsDraggingFrame = false;
 		ReleaseCapture();
 	}
+}
+
+void MainPanel::OnBgChangeTimer(wxTimerEvent& event)
+{
+	if ( !m_bCanChangeBackground )
+	{
+		m_bgChangeTimer.StartOnce(7000);
+		return;
+	}
+
+	m_bDoFadeOut = true;
+	m_bgAnimTimer.Start(8);
+}
+
+void MainPanel::DoAnimateBackground(bool refresh)
+{
+	if ( m_bDoFadeOut )
+	{
+		char currentAlpha = m_bgFadeColour.Alpha();
+		m_bgFadeColour = wxColour(0, 0, 0, currentAlpha + 2U);
+
+		if ( m_bgFadeColour.Alpha() >= 254U )
+		{
+			m_bgFadeColour = wxColour(0, 0, 0, 255U);
+			m_bDoFadeOut = false;
+
+			ChangeToRandomBgImage();
+			m_bDoFadeIn = true;
+		}
+	}
+	else if ( m_bDoFadeIn )
+	{
+		char currentAlpha = m_bgFadeColour.Alpha();
+		m_bgFadeColour = wxColour(0, 0, 0, currentAlpha - 2U);
+
+		if ( m_bgFadeColour.Alpha() <= 1U )
+		{
+			m_bgFadeColour = wxColour(0, 0, 0, 0);
+			m_bDoFadeIn = false;
+			m_bgChangeTimer.StartOnce(7000);
+		}
+	}
+
+	BackgroundImageCanvas::DoAnimateBackground(refresh);
 }

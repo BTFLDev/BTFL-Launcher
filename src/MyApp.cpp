@@ -12,6 +12,7 @@ bool MyApp::OnInit()
 	wxFont::AddPrivateFont("Assets/Fonts/Lora-Regular.ttf");
 
 	wxImage::AddHandler(new wxPNGHandler);
+	wxImage::AddHandler(new wxJPEGHandler);
 	wxImage::AddHandler(new wxICOHandler);
 
 	btfl::Init();
