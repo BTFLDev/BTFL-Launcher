@@ -259,9 +259,9 @@ void LeftSidebar::ShowWelcome()
 	m_patchNotesLabel->SetFont(wxFontInfo(10).FaceName("Lora"));
 	m_welcomeLabel->SetFont(wxFontInfo(10).FaceName("Lora").Underlined());
 
-	GetSizer()->Layout();
-	m_welcomePage->LayoutRTC();
+	Layout();
 	Thaw();
+	m_welcomePage->LayoutRTC();
 
 	m_bIsWelcomeShown = true;
 }
@@ -279,9 +279,9 @@ void LeftSidebar::ShowPatchNotes()
 	m_welcomeLabel->SetFont(wxFontInfo(10).FaceName("Lora"));
 	m_patchNotesLabel->SetFont(wxFontInfo(10).FaceName("Lora").Underlined());
 
-	GetSizer()->Layout();
-	m_patchNotesPage->LayoutRTC();
+	Layout();
 	Thaw();
+	m_patchNotesPage->LayoutRTC();
 
 	m_bIsWelcomeShown = false;
 }
