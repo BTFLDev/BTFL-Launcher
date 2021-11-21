@@ -960,6 +960,7 @@ void MainPanel::OnLeftDown(wxMouseEvent& event) {
 		Refresh();
 
 		m_bShouldDeleteUpdateBtn = false;
+		SetCursor(wxCURSOR_DEFAULT);
 		return;
 	}
 
