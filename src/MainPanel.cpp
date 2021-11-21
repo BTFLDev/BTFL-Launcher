@@ -302,7 +302,7 @@ void MainPanel::VerifyIso()
 			m_nextGaugeLabel = "Verifying ISO validity...";
 			srand(time(0));
 
-			wxString fileHash = iso::GetFileHash(btfl::GetIsoFileName().GetFullPath(), m_nextGaugeValue);
+			wxString fileHash = iso::GetFileHash(btfl::GetIsoFileName().GetFullPath(), m_nextGaugeValue, m_nextGaugeValueMutex);
 			
 			m_nextGaugeLabel = "Processing results...";
 			iso::ISO_Region region = iso::GetIsoRegion(fileHash);

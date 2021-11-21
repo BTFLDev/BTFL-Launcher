@@ -72,7 +72,7 @@ namespace iso
 		return ISO_Invalid;
 	}
 
-	inline wxString GetFileHash(const wxString& filePath, std::atomic<int>& gaugeUpdater)
+	inline wxString GetFileHash(const wxString& filePath, std::atomic<int>& gaugeUpdater, wxMutex& gaugeUpdaterMutex)
 	{
 		wxFileInputStream stream(filePath);
 		if ( !stream.IsOk() )
@@ -103,6 +103,7 @@ namespace iso
 			hasher.absorb(buffer, stream.LastRead());
 			delete[] buffer;
 
+			wxMutexLocker locker(gaugeUpdaterMutex);
 			gaugeUpdater = (rand() % int(gaugeSteps)) + (gaugeSteps * index++);
 		}
 
