@@ -88,13 +88,13 @@ void BackgroundImageCanvas::OnSize(wxSizeEvent& event)
 	if ( curRatio > m_bgRatio )
 	{
 		m_bgScale = (double)(size.x + overallOffset) / m_background.GetWidth();
-		m_bgy = (double)(((size.y - overallOffset) - ((double)m_background.GetHeight() * m_bgScale)) / 2) / m_bgScale;
-		m_bgx = -MAX_BG_OFFSET;
+		m_bgy = ((size.y - (m_background.GetHeight() * m_bgScale)) / 2) / m_bgScale;
+		m_bgx = -MAX_BG_OFFSET / m_bgScale;
 	} else
 	{
 		m_bgScale = (double)(size.y + overallOffset) / m_background.GetHeight();
-		m_bgx = (double)(((size.x - overallOffset) - ((double)m_background.GetWidth() * m_bgScale)) / 2) / m_bgScale;
-		m_bgy = -MAX_BG_OFFSET;
+		m_bgx = ((size.x - (m_background.GetWidth() * m_bgScale)) / 2) / m_bgScale;
+		m_bgy = -MAX_BG_OFFSET / m_bgScale;
 	}
 
 	InvalidateVisibleRect();
