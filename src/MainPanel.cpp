@@ -77,9 +77,8 @@ MainPanel::MainPanel(wxSFDiagramManager* manager,
 
 	Bind(wxEVT_WEBREQUEST_STATE, &MainPanel::OnWebRequestState, this);
 
-	m_background = utils::crypto::GetDecryptedImage(GetRandomBgImagePath());
+	ChangeToRandomBgImage();
 	m_logo.LoadFile("Assets/LauncherLogo.png", wxBITMAP_TYPE_PNG);
-	m_bgRatio = (double)m_background.GetWidth() / m_background.GetHeight();
 
 	m_fileContainer.LoadFile("Assets/Containers/FilePath@2x.png", wxBITMAP_TYPE_PNG);
 	m_fileBmp.LoadFile("Assets/Icon/Browse@2x.png", wxBITMAP_TYPE_PNG);
@@ -469,6 +468,9 @@ void MainPanel::OnGaugeFinished()
 
 void MainPanel::DoSelectIso()
 {
+	// Attempting to read a file when this dialog is open causes an exception, probably due to Working Directory
+	m_bCanChangeBackground = false;
+
 	wxFileDialog fileDialog(nullptr, _("Please select an original Shadow Of The Colossus ISO file..."),
 		"", "", "ISO files (*.iso;*.ISO)|*.iso;*.ISO", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
@@ -494,6 +496,7 @@ void MainPanel::DoSelectIso()
 	if ( !btfl::HasUserAgreedToDisclaimer() )
 		m_mainFrame->ShowDisclaimer();
 
+	m_bCanChangeBackground = true;
 }
 
 void MainPanel::DoInstallGame()
@@ -747,15 +750,48 @@ void MainPanel::UnzipGameFiles()
 	thread.detach();
 }
 
-wxString MainPanel::GetRandomBgImagePath()
+void MainPanel::ChangeToRandomBgImage()
 {
-	srand(time(0));
+	if ( !m_bCanChangeBackground )
+		return;
 
-	switch ( rand() % 1 + 1 )
+	srand(time(0));
+	int nCurrentBackground;
+	int nNewBackground = -1;
+
+	if ( !m_vShownBackgrounds.IsEmpty() ) nCurrentBackground = m_vShownBackgrounds.Last();
+	else nCurrentBackground = -1;
+
+	if ( m_vShownBackgrounds.Count() == 6 )
+		m_vShownBackgrounds.Clear();
+
+	do { nNewBackground = rand() % 6 + 1; } while ( m_vShownBackgrounds.Index(nNewBackground) != wxNOT_FOUND  && nNewBackground == nCurrentBackground);
+	m_vShownBackgrounds.Add(nNewBackground);
+	
+	switch ( nNewBackground )
 	{
-	case 1:	return "Assets/Background/Main Page Roc.png";
-	default: "Assets/Background/Main Page Roc.png";
+	case 1:
+		m_background = utils::crypto::GetDecryptedImage("Assets/Background/Main Page Roc.jpg");
+		break;
+	case 2:
+		m_background = utils::crypto::GetDecryptedImage("Assets/Background/Main Page Cauldron.jpg");
+		break;
+	case 3:
+		m_background = utils::crypto::GetDecryptedImage("Assets/Background/Main Page Phoenix.jpg");
+		break;
+	case 4:
+		m_background = utils::crypto::GetDecryptedImage("Assets/Background/Main Page Sirius.jpg");
+		break;
+	case 5:
+		m_background = utils::crypto::GetDecryptedImage("Assets/Background/Main Page Spider.jpg");
+		break;
+	case 6:
+		m_background = utils::crypto::GetDecryptedImage("Assets/Background/Main Page Worm.jpg");
+		break;
+	default: m_background = utils::crypto::GetDecryptedImage("Assets/Background/Main Page Roc.jpg");
 	}
+
+	m_bgRatio = (double)m_background.GetWidth() / m_background.GetHeight();
 }
 
 void MainPanel::OnFrameButtons(wxSFShapeMouseEvent& event)

@@ -75,6 +75,7 @@ class MainPanel : public BackgroundImageCanvas
 private:
 	MainFrame* m_mainFrame = nullptr;
 
+	wxArrayInt m_vShownBackgrounds;
 	wxBitmap m_logo;
 	int m_logox = 0, m_logoy = 0;
 
@@ -120,6 +121,8 @@ private:
 	wxPoint m_versionLabelPos;
 	wxFont m_versionFont{ wxFontInfo(8).FaceName("Lora") };
 
+	bool m_bCanChangeBackground = true;
+
 public:
 	MainPanel(wxSFDiagramManager* manager,
 		MainFrame* parent,
@@ -164,7 +167,7 @@ public:
 
 	void UnzipGameFiles();
 
-	wxString GetRandomBgImagePath();
+	void ChangeToRandomBgImage();
 
 	// wxSF event handlers.
 	void OnFrameButtons(wxSFShapeMouseEvent& event);
