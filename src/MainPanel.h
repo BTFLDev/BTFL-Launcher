@@ -55,8 +55,11 @@ enum
 	TIMER_Gauge,
 
 	WEB_Install,
+	WEB_InstallEssence,
 	WEB_LookForLauncherUpdate,
 	WEB_LookForGameUpdate,
+	WEB_LookForEssenceGameUpdate,
+	WEB_GetEssencePassword,
 
 	TIMER_BgChange,
 };
@@ -68,6 +71,9 @@ enum GaugeResult
 
 	GAUGE_InstallationSuccessful,
 	GAUGE_InstallationUnsuccessful,
+
+	GAUGE_EssenceInstallationSuccessful,
+	GAUGE_EssenceInstallationUnsuccessful,
 
 	GAUGE_Invalid
 };
@@ -91,17 +97,20 @@ private:
 	wxBitmap m_fileContainer, m_fileBmp;
 
 	double m_fileBmpScale = 1.0;
-	int m_xFLabel = -1, m_yFLabel = -1,
-		m_xFDesc = -1, m_yFDesc = -1,
-		m_xFCont = -1, m_yFCont = -1,
-		m_xFBmp = -1, m_yFBmp = -1;
+	wxPoint m_fileLabelPos{ -1, -1 },
+		m_fileDescPos{ -1, -1 },
+		m_fileContPos{ -1, -1 },
+		m_fileBmpPos{ -1, -1 };
 
 	TransparentButton* m_mainButton = nullptr,
 		* m_configButton = nullptr,
-		* m_updateButton = nullptr;
+		* m_updateButton = nullptr,
+		* m_essenceMainButton = nullptr,
+		* m_essenceUpdateButton = nullptr;
 	FrameButtons* m_frameButtons = nullptr;
 
 	bool m_bShouldDeleteUpdateBtn = false;
+	bool m_bShouldDeleteEssenceUpdateBtn = false;
 
 	CustomGauge* m_gauge = nullptr;
 	wxSFTextShape* m_gaugeLabel = nullptr,
@@ -112,9 +121,12 @@ private:
 	wxString m_nextGaugeLabel;
 	std::atomic<GaugeResult> m_gaugeResult = GAUGE_Invalid;
 
-	wxWebRequest m_webRequest;
-	wxWebRequest m_latestLauncherVersionRequest;
-	wxWebRequest m_latestGameVersionRequest;
+	wxWebRequest m_webRequest,
+		m_webRequestEssence,
+		m_latestLauncherVersionRequest,
+		m_latestGameVersionRequest,
+		m_latestEssenceGameVersionRequest,
+		m_essencePasswordRequest;
 
 	bool m_bIsDraggingFrame = false;
 	wxRect m_dragSafeArea;
@@ -138,6 +150,10 @@ public:
 		long style = wxBORDER_NONE);
 
 	void SetState(btfl::LauncherState state);
+	void SetEssenceState(btfl::LauncherEssenceState state);
+	
+	void CreateEssencesButtonsIfNeeded();
+	void DestroyEssencesButtonsIfNeeded();
 
 	// Put everything in place, be it buttons, labels, bitmaps, etc.
 	void RepositionAll();
@@ -149,7 +165,9 @@ public:
 	void DestroyGauge();
 
 	void CreateUpdateButton();
-	void DestroyUpdateButton();
+	void CreateEssenceUpdateButton();
+
+	void DestroyButton(TransparentButton*& pButton);
 
 	// Updates the gauge and refreshes the screen. "Message" is assiged to m_gaugeLabel.
 	void UpdateGauge(int currentUnit, const wxString& message, bool refresh);
@@ -166,15 +184,33 @@ public:
 
 	void DoSelectIso();
 	void DoInstallGame();
+	void DoInstallEssenceGame();
 
 	void DoLookForLauncherUpdates();
 	void DoLookForGameUpdates();
+	void DoLookForEssenceGameUpdates();
+	void DoCheckEssencePassword();
 
+	void PerformWebRequest(
+		wxWebRequest& webRequestObj,
+		const wxString& file,
+		long id,
+		wxWebRequest::Storage storage,
+		const wxString& tempDir = "",
+		const wxString& failMessage = ""
+	);
 	void OnWebRequestState(wxWebRequestEvent& event);
+	void HandleInstallWebRequest(wxWebRequestEvent& event);
+	void HandleLauncherUpdateWebRequest(wxWebRequestEvent& event);
+	void HandleGameUpdateWebRequest(wxWebRequestEvent& event);
+	void HandleEssenceGameUpdateWebRequest(wxWebRequestEvent& event);
+	void HandleEssencePasswordWebRequest(wxWebRequestEvent& event);
 
-	void UnzipGameFiles();
+	void UnzipGameFiles(const wxString& filePath, const wxString& fileName, GaugeResult onSuccess, GaugeResult onFailure);
 
 	void ChangeToRandomBgImage();
+
+	void PromptForBecomingEssence();
 
 	// wxSF event handlers.
 	void OnFrameButtons(wxSFShapeMouseEvent& event);
@@ -183,6 +219,9 @@ public:
 	void OnInstall(wxSFShapeMouseEvent& event);
 	void OnPlay(wxSFShapeMouseEvent& event);
 	void OnSettings(wxSFShapeMouseEvent& event);
+
+	void OnInstallEssence(wxSFShapeMouseEvent& event);
+	void OnPlayEssence(wxSFShapeMouseEvent& event);
 
 	virtual void OnSize(wxSizeEvent& event) override;
 	virtual void OnMouseMove(wxMouseEvent& event) override;

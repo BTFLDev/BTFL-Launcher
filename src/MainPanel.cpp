@@ -7,6 +7,7 @@
 #include <wx/zipstrm.h>
 #include <wx/sstream.h>
 #include <wx/mimetype.h>
+#include <wx/textdlg.h>
 
 #include "IsoChecking.h"
 #include "wxmemdbg.h"
@@ -59,6 +60,10 @@ EVT_SF_SHAPE_LEFT_DOWN(btfl::LauncherState::STATE_ToInstallGame, MainPanel::OnIn
 EVT_SF_SHAPE_LEFT_DOWN(btfl::LauncherState::STATE_ToUpdateGame, MainPanel::OnInstall)
 EVT_SF_SHAPE_LEFT_DOWN(btfl::LauncherState::STATE_ToPlayGame, MainPanel::OnPlay)
 EVT_SF_SHAPE_LEFT_DOWN(BUTTON_Settings, MainPanel::OnSettings)
+
+EVT_SF_SHAPE_LEFT_DOWN(btfl::LauncherEssenceState::STATE_ToInstallGameEssence, MainPanel::OnInstallEssence)
+EVT_SF_SHAPE_LEFT_DOWN(btfl::LauncherEssenceState::STATE_ToUpdateGameEssence, MainPanel::OnInstallEssence)
+EVT_SF_SHAPE_LEFT_DOWN(btfl::LauncherEssenceState::STATE_ToPlayGameEssence, MainPanel::OnPlayEssence)
 
 EVT_TIMER(TIMER_Gauge, MainPanel::OnGaugeTimer)
 
@@ -177,6 +182,8 @@ void MainPanel::SetState(btfl::LauncherState state)
 		m_fileLabel = iso::GetGameNameFromRegion(btfl::GetIsoRegion());
 		m_fileDesc = iso::GetRegionAcronym(btfl::GetIsoRegion());
 		
+		if ( m_essenceMainButton ) m_essenceMainButton->Enable(true);
+		if ( m_essenceUpdateButton ) m_essenceUpdateButton->Enable(true);
 		DestroyGauge();
 		break;
 
@@ -186,6 +193,8 @@ void MainPanel::SetState(btfl::LauncherState state)
 		m_mainButton->Enable(false);
 		m_mainButton->SetState(Processing);
 
+		if ( m_essenceMainButton ) m_essenceMainButton->Enable(false);
+		if ( m_essenceUpdateButton ) m_essenceUpdateButton->Enable(false);
 		CreateGauge();
 		break;
 
@@ -201,6 +210,8 @@ void MainPanel::SetState(btfl::LauncherState state)
 		m_fileLabel = iso::GetGameNameFromRegion(btfl::GetIsoRegion());
 		m_fileDesc = iso::GetRegionAcronym(btfl::GetIsoRegion());
 
+		if ( m_essenceMainButton ) m_essenceMainButton->Enable(true);
+		if ( m_essenceUpdateButton ) m_essenceUpdateButton->Enable(true);
 		DestroyGauge();
 		break;
 
@@ -210,6 +221,8 @@ void MainPanel::SetState(btfl::LauncherState state)
 		m_mainButton->Enable(false);
 		m_mainButton->SetState(Processing);
 
+		if ( m_essenceMainButton ) m_essenceMainButton->Enable(false);
+		if ( m_essenceUpdateButton ) m_essenceUpdateButton->Enable(false);
 		CreateGauge();
 		break;
 	}
@@ -221,6 +234,103 @@ void MainPanel::SetState(btfl::LauncherState state)
 
 	RepositionAll();
 	Refresh();
+}
+
+void MainPanel::SetEssenceState(btfl::LauncherEssenceState state)
+{
+	if ( state != btfl::STATE_NoneEssence )
+		CreateEssencesButtonsIfNeeded();
+
+	m_essenceMainButton->SetId(state);
+
+	switch ( state )
+	{
+	case btfl::LauncherEssenceState::STATE_NoneEssence:
+		DestroyEssencesButtonsIfNeeded();
+
+		m_mainButton->Enable(true);
+		if ( m_updateButton ) m_updateButton->Enable(true);
+		DestroyGauge();
+		break;
+
+	case btfl::LauncherEssenceState::STATE_ToInstallGameEssence:
+		m_essenceMainButton->SetBitmap(wxBitmap("Assets/Icon/Download@2x.png", wxBITMAP_TYPE_PNG));
+		m_essenceMainButton->SetLabel("INSTALL PREVIEW");
+		m_essenceMainButton->Enable(true);
+		m_essenceMainButton->SetState(Idle);
+
+		m_mainButton->Enable(true);
+		if ( m_updateButton ) m_updateButton->Enable(true);
+		DestroyGauge();
+		break;
+
+	case btfl::LauncherEssenceState::STATE_InstallingGameEssence:
+		m_essenceMainButton->SetBitmap(wxNullBitmap);
+		m_essenceMainButton->SetLabel("INSTALLING PREVIEW...");
+		m_essenceMainButton->Enable(false);
+		m_essenceMainButton->SetState(Processing);
+
+		m_mainButton->Enable(false);
+		if ( m_updateButton ) m_updateButton->Enable(false);
+		CreateGauge();
+		break;
+
+	case btfl::LauncherEssenceState::STATE_ToPlayGameEssence:
+	case btfl::LauncherEssenceState::STATE_ToUpdateGameEssence:
+		m_essenceMainButton->SetBitmap(wxNullBitmap);
+		m_essenceMainButton->SetLabel("PLAY PREVIEW");
+		m_essenceMainButton->Enable(true);
+		m_essenceMainButton->SetState(Special);
+
+		m_mainButton->Enable(true);
+		if ( m_updateButton ) m_updateButton->Enable(true);
+		DestroyGauge();
+		break;
+
+	case btfl::LauncherEssenceState::STATE_UpdatingGameEssence:
+		m_essenceMainButton->SetBitmap(wxNullBitmap);
+		m_essenceMainButton->SetLabel("UPDATING PREVIEW...");
+		m_essenceMainButton->Enable(false);
+		m_essenceMainButton->SetState(Processing);
+
+		m_mainButton->Enable(false);
+		if ( m_updateButton ) m_updateButton->Enable(false);
+		CreateGauge();
+		break;
+	}
+
+	if ( state == btfl::LauncherEssenceState::STATE_ToUpdateGameEssence )
+		CreateEssenceUpdateButton();
+	else
+		m_bShouldDeleteEssenceUpdateBtn = true;
+
+	RepositionAll();
+	Refresh();
+}
+
+void MainPanel::CreateEssencesButtonsIfNeeded()
+{
+	if ( btfl::GetEssenceState() != btfl::LauncherEssenceState::STATE_NoneEssence &&  !m_essenceMainButton )
+	{
+		wxSFDiagramManager* pManager = GetDiagramManager();
+
+		m_essenceMainButton = new TransparentButton("", wxDefaultPosition, wxDefaultPosition, 3.0, pManager);
+		m_essenceMainButton->SetId(btfl::LauncherEssenceState::STATE_ToInstallGameEssence);
+		m_essenceMainButton->SetFont(wxFontInfo(20).FaceName("Lora"));
+		m_essenceMainButton->SetPadding(35, 12);
+		pManager->AddShape(m_essenceMainButton, nullptr, wxDefaultPosition, true, false);
+	}
+}
+
+void MainPanel::DestroyEssencesButtonsIfNeeded()
+{
+	m_bShouldDeleteEssenceUpdateBtn = true;
+
+	if ( !m_essenceMainButton )
+		return;
+
+	GetDiagramManager()->RemoveShape(m_essenceMainButton, false);
+	m_essenceMainButton = nullptr;
 }
 
 void MainPanel::RepositionAll()
@@ -249,23 +359,23 @@ void MainPanel::RepositionAll()
 	shapeRect = m_frameButtons->GetBoundingBox();
 	m_frameButtons->MoveTo(size.x - shapeRect.width - 10, 10);
 
-	m_xFCont = (double)mainButtonRect.GetLeft() / m_fileBmpScale;
-	m_yFCont = (double)(mainButtonRect.GetTop() - ((double)m_fileContainer.GetHeight() * m_fileBmpScale) - 10) / m_fileBmpScale;
+	m_fileContPos.x = (double)mainButtonRect.GetLeft() / m_fileBmpScale;
+	m_fileContPos.y = (double)(mainButtonRect.GetTop() - ((double)m_fileContainer.GetHeight() * m_fileBmpScale) - 10) / m_fileBmpScale;
 
-	m_xFBmp = m_xFCont + 20;
-	m_yFBmp = m_yFCont + (((double)m_fileBmp.GetHeight() * m_fileBmpScale) / 2) - 4;
+	m_fileBmpPos.x = m_fileContPos.x + 20;
+	m_fileBmpPos.y = m_fileContPos.y + (((double)m_fileBmp.GetHeight() * m_fileBmpScale) / 2) - 4;
 
-	m_xFLabel = (double)(m_xFBmp + m_fileBmp.GetWidth() + 10) * m_fileBmpScale;
-	m_yFLabel = ((double)m_yFCont * m_fileBmpScale) + 6;
+	m_fileLabelPos.x = (double)(m_fileBmpPos.x + m_fileBmp.GetWidth() + 10) * m_fileBmpScale;
+	m_fileLabelPos.y = ((double)m_fileContPos.y * m_fileBmpScale) + 6;
 
 	wxClientDC dc(this);
 	dc.SetFont(m_fileDescFont);
 	wxSize textSize = dc.GetTextExtent(m_fileDesc);
 
-	m_xFDesc = m_xFLabel;
-	m_yFDesc = ((double)(m_yFCont + m_fileContainer.GetHeight()) * m_fileBmpScale) - textSize.y - 4;
+	m_fileDescPos.x = m_fileLabelPos.x;
+	m_fileDescPos.y = ((double)(m_fileContPos.y + m_fileContainer.GetHeight()) * m_fileBmpScale) - textSize.y - 4;
 	if ( btfl::GetState() == btfl::STATE_ToSelectIso  || btfl::GetState() == btfl::STATE_VerificationFailed )
-		m_viewGuideRect = { wxPoint(m_xFDesc, m_yFDesc), textSize };
+		m_viewGuideRect = { m_fileDescPos, textSize };
 	else
 		m_viewGuideRect = { -1,-1,-1,-1 };
 
@@ -284,6 +394,18 @@ void MainPanel::RepositionAll()
 		m_gaugeLabel->MoveTo(shapeRect.x, shapeRect.y - m_gaugeLabel->GetRectSize().y - 10);
 		m_gaugeProgress->MoveTo(shapeRect.GetRight() - m_gaugeProgress->GetRectSize().x,
 			shapeRect.y - m_gaugeProgress->GetRectSize().y - 10);
+	}
+
+	if ( m_essenceMainButton )
+	{
+		m_essenceMainButton->RecalculateSelf();
+		m_essenceMainButton->MoveTo(m_fileContPos.x * m_fileBmpScale, (m_fileContPos.y * m_fileBmpScale) - 10 - m_essenceMainButton->GetRectSize().y);
+
+		if ( m_essenceUpdateButton )
+		{
+			m_essenceUpdateButton->RecalculateSelf();
+			m_essenceUpdateButton->MoveTo(m_essenceMainButton->GetBoundingBox().GetTopRight() + wxPoint(10, 0));
+		}
 	}
 }
 
@@ -404,13 +526,28 @@ void MainPanel::CreateUpdateButton()
 	pManager->AddShape(m_updateButton, nullptr, wxDefaultPosition, true, false);
 }
 
-void MainPanel::DestroyUpdateButton()
+void MainPanel::CreateEssenceUpdateButton()
 {
-	if ( !m_updateButton )
+	if ( m_essenceUpdateButton )
 		return;
 
-	GetDiagramManager()->RemoveShape(m_updateButton, false);
-	m_updateButton = nullptr;
+	wxSFDiagramManager* pManager = GetDiagramManager();
+
+	m_essenceUpdateButton = new TransparentButton("UPDATE PREVIEW", wxDefaultPosition, wxDefaultPosition, 3.0, pManager);
+	m_essenceUpdateButton->SetId(btfl::STATE_ToUpdateGameEssence);
+	m_essenceUpdateButton->SetFont(wxFontInfo(20).FaceName("Lora"));
+	m_essenceUpdateButton->SetPadding(35, 12);
+	m_essenceUpdateButton->SetBitmap(wxBitmap("Assets/Icon/Update@2x.png", wxBITMAP_TYPE_PNG));
+	pManager->AddShape(m_essenceUpdateButton, nullptr, wxDefaultPosition, true, false);
+}
+
+void MainPanel::DestroyButton(TransparentButton*& pButton)
+{
+	if ( !pButton )
+		return;
+
+	GetDiagramManager()->RemoveShape(pButton, false);
+	pButton = nullptr;
 }
 
 void MainPanel::DoCheckGauge(bool refresh)
@@ -419,10 +556,19 @@ void MainPanel::DoCheckGauge(bool refresh)
 
 	// This isn't what I wanted but the OnInstallWebRequestData event doesn't seem to work
 	btfl::LauncherState currentState = btfl::GetState();
+	btfl::LauncherEssenceState currentEssenceState = btfl::GetEssenceState();
 	if ( currentState == btfl::STATE_InstallingGame || currentState == btfl::STATE_UpdatingGame )
 	{
 		int nValue = (m_webRequest.GetBytesReceived() * 90) /
 			m_webRequest.GetBytesExpectedToReceive();
+
+		if ( nValue != 90 )
+			m_nextGaugeValue = nValue;
+	}
+	else if ( currentEssenceState == btfl::STATE_InstallingGameEssence || currentEssenceState == btfl::STATE_UpdatingGameEssence )
+	{
+		int nValue = (m_webRequestEssence.GetBytesReceived() * 90) /
+			m_webRequestEssence.GetBytesExpectedToReceive();
 
 		if ( nValue != 90 )
 			m_nextGaugeValue = nValue;
@@ -470,6 +616,18 @@ void MainPanel::OnGaugeFinished()
 	case GAUGE_InstallationUnsuccessful:
 		btfl::RestoreLastState();
 		break;
+	case GAUGE_EssenceInstallationSuccessful:
+	{
+		btfl::SQLEntry entry("launcher_data");
+		entry.strings["installed_essence_game_version"] = btfl::GetLatestEssenceGameVersion();
+		btfl::UpdateDatabase(entry);
+
+		btfl::SetEssenceState(btfl::LauncherEssenceState::STATE_ToPlayGameEssence);
+		break;
+	}
+	case GAUGE_EssenceInstallationUnsuccessful:
+		btfl::RestoreLastEssenceState();
+		break;
 	}
 }
 
@@ -516,21 +674,16 @@ void MainPanel::DoInstallGame()
 	if ( !installFileName.Exists() )
 		wxMkdir(installFileName.GetFullPath(), wxS_DIR_DEFAULT);
 
-	m_webRequest = wxWebSession::GetDefault().CreateRequest(
-		this,
-		btfl::GetStorageURL() + "game/BTFL.zip",
-		WEB_Install
+	PerformWebRequest(
+		m_webRequest,
+		"game/BTFL.zip",
+		WEB_Install,
+		wxWebRequest::Storage_File,
+		installFileName.GetFullPath(),
+		"Unable to start installation. Please check your internet connection and try again."
 	);
-	m_webRequest.SetStorage(wxWebRequest::Storage_File);
-	wxWebSession::GetDefault().SetTempDir(installFileName.GetFullPath());
-
-	if ( !m_webRequest.IsOk() )
-	{
-		wxMessageBox("Unable to start installation. Please check your internet connection and try again.");
-		return;
-	}
 	
-	m_nextGaugeLabel = "...";
+	m_nextGaugeLabel = "Downloading files...";
 	switch ( currentState )
 	{
 	case btfl::STATE_ToInstallGame:
@@ -541,47 +694,109 @@ void MainPanel::DoInstallGame()
 		btfl::SetState(btfl::STATE_UpdatingGame);
 		break;
 	}
+}
 
-	m_webRequest.SetHeader(
-		utils::crypto::GetDecryptedString("Bxujpuj}bvjro"),
-		utils::crypto::GetDecryptedString("urlgo#hkqaofv[mKr7ijR|GhH\\Spm48ygpzY4nKT4m6MhN"));
-	m_webRequest.Start();
+void MainPanel::DoInstallEssenceGame()
+{
+	btfl::LauncherEssenceState currentState = btfl::GetEssenceState();
+	if ( currentState != btfl::STATE_ToInstallGameEssence && currentState != btfl::STATE_ToUpdateGameEssence )
+		return;
+
+	wxFileName essenceInstallFileName = btfl::GetEssenceInstallFileName();
+	if ( !essenceInstallFileName.Exists() )
+		wxMkdir(essenceInstallFileName.GetFullPath(), wxS_DIR_DEFAULT);
+
+	PerformWebRequest(
+		m_webRequestEssence,
+		"game/BTFL_Preview.zip",
+		WEB_InstallEssence,
+		wxWebRequest::Storage_File,
+		essenceInstallFileName.GetFullPath(),
+		"Unable to start installation. Please check your internet connection and try again."
+	);
+
+	m_nextGaugeLabel = "Downloading files...";
+	switch ( currentState )
+	{
+	case btfl::STATE_ToInstallGameEssence:
+		btfl::SetEssenceState(btfl::STATE_InstallingGameEssence);
+		break;
+
+	case btfl::STATE_ToUpdateGameEssence:
+		btfl::SetEssenceState(btfl::STATE_UpdatingGameEssence);
+		break;
+	}
 }
 
 void MainPanel::DoLookForLauncherUpdates()
 {
-	m_webRequest = wxWebSession::GetDefault().CreateRequest(
-		this,
-		btfl::GetStorageURL() + "launcher/version.txt",
-		WEB_LookForLauncherUpdate
+	PerformWebRequest(
+		m_latestLauncherVersionRequest,
+		"launcher/version.txt",
+		WEB_LookForLauncherUpdate,
+		wxWebRequest::Storage_Memory
 	);
-	m_webRequest.SetStorage(wxWebRequest::Storage_Memory);
-
-	if ( !m_webRequest.IsOk() )
-		return;
-
-	m_webRequest.SetHeader(
-		utils::crypto::GetDecryptedString("Bxujpuj}bvjro"),
-		utils::crypto::GetDecryptedString("urlgo#hkqaofv[mKr7ijR|GhH\\Spm48ygpzY4nKT4m6MhN"));
-	m_webRequest.Start();
 }
 
 void MainPanel::DoLookForGameUpdates()
 {
-	m_webRequest = wxWebSession::GetDefault().CreateRequest(
-		this,
-		btfl::GetStorageURL() + "game/version.txt",
-		WEB_LookForGameUpdate
+	PerformWebRequest(
+		m_latestGameVersionRequest,
+		"game/version.txt",
+		WEB_LookForGameUpdate,
+		wxWebRequest::Storage_Memory
 	);
-	m_webRequest.SetStorage(wxWebRequest::Storage_Memory);
+}
 
-	if ( !m_webRequest.IsOk() )
+void MainPanel::DoLookForEssenceGameUpdates()
+{
+	PerformWebRequest(
+		m_latestEssenceGameVersionRequest,
+		"game/essence_version.txt",
+		WEB_LookForEssenceGameUpdate,
+		wxWebRequest::Storage_Memory
+	);
+}
+
+void MainPanel::DoCheckEssencePassword()
+{
+	PerformWebRequest(
+		m_essencePasswordRequest,
+		"launcher/essence_password.txt",
+		WEB_GetEssencePassword,
+		wxWebRequest::Storage_Memory
+	);
+}
+
+void MainPanel::PerformWebRequest(
+	wxWebRequest& webRequestObj,
+	const wxString& file,
+	long id,
+	wxWebRequest::Storage storage,
+	const wxString& tempDir,
+	const wxString& failMessage
+)
+{
+	webRequestObj = wxWebSession::GetDefault().CreateRequest(
+		this,
+		btfl::GetStorageURL() + file,
+		id
+	);
+	webRequestObj.SetStorage(storage);
+	if ( !tempDir.IsEmpty() )
+		wxWebSession::GetDefault().SetTempDir(tempDir);
+
+	if ( !webRequestObj.IsOk() )
+	{
+		if ( !failMessage.IsEmpty() )
+			wxMessageBox(failMessage, "Web request failed!");
+
 		return;
-
-	m_webRequest.SetHeader(
+	}
+	webRequestObj.SetHeader(
 		utils::crypto::GetDecryptedString("Bxujpuj}bvjro"),
 		utils::crypto::GetDecryptedString("urlgo#hkqaofv[mKr7ijR|GhH\\Spm48ygpzY4nKT4m6MhN"));
-	m_webRequest.Start();
+	webRequestObj.Start();
 }
 
 void MainPanel::OnWebRequestState(wxWebRequestEvent& event)
@@ -589,120 +804,195 @@ void MainPanel::OnWebRequestState(wxWebRequestEvent& event)
 	switch ( event.GetId() )
 	{
 	case WEB_Install:
-		switch ( event.GetState() )
-		{
-		case wxWebRequest::State_Completed:
-		{
-			m_nextGaugeValue = 95;
-			switch ( btfl::GetState() )
-			{
-			case btfl::STATE_InstallingGame:
-				m_nextGaugeLabel = "Installing game...";
-				break;
-			case btfl::STATE_UpdatingGame:
-				m_nextGaugeLabel = "Updating game...";
-				break;
-			}
-
-			wxFileName fileName(event.GetDataFile());
-			fileName.SetName("BTFL");
-			fileName.SetExt("zip");
-
-			if ( wxRenameFile(event.GetDataFile(), fileName.GetFullPath()) )
-			{
-				UnzipGameFiles();
-			}
-			else
-			{
-				wxMessageBox("There was a problem when installing the game.\n"
-					"Please try again and, if the problem persists, contact the team at the Discord Server.");
-				btfl::RestoreLastState();
-			}
-
-			break;
-		}
-		case wxWebRequest::State_Idle:
-			m_nextGaugeLabel = "Connecting...";
-			break;
-		case wxWebRequest::State_Active:
-			m_nextGaugeLabel = "Downloading files...";
-			break;
-		case wxWebRequest::State_Failed:
-		case wxWebRequest::State_Cancelled:
-			wxMessageBox("There was a problem when downloading the game. Please check your internet connection and try again.");
-			btfl::RestoreLastState();
-			break;
-		}
-
+	case WEB_InstallEssence:
+		HandleInstallWebRequest(event);
 		break;
 
 	case WEB_LookForLauncherUpdate:
-		if ( event.GetState() == wxWebRequest::State_Completed )
-		{
-			wxStringInputStream* sstream = (wxStringInputStream*)event.GetResponse().GetStream();
-			wxStringOutputStream outStream;
-			sstream->Read(outStream);
-
-			if ( !outStream.GetString().IsEmpty() && btfl::GetInstalledLauncherVersion() != outStream.GetString() )
-			{
-				wxMessageDialog dialog(
-					nullptr,
-					"There's an update available for the Launcher. Press okay to continue with the installation.",
-					wxString::FromAscii(wxMessageBoxCaptionStr),
-					wxOK | wxCANCEL
-				);
-
-				if ( dialog.ShowModal() == wxID_OK )
-					btfl::DoUpdateLauncher();
-			}
-
-			break;
-		}
-
+		HandleLauncherUpdateWebRequest(event);
 		break;
 	case WEB_LookForGameUpdate:
-		if ( event.GetState() == wxWebRequest::State_Completed )
-		{
-			wxStringInputStream* sstream = (wxStringInputStream*)event.GetResponse().GetStream();
-			wxStringOutputStream outStream;
-			sstream->Read(outStream);
-
-			if ( !outStream.GetString().IsEmpty() )
-			{
-				btfl::SetLatestGameVerstion(outStream.GetString());
-				if ( btfl::GetInstalledGameVersion() != outStream.GetString() )
-				{
-					if ( btfl::GetState() == btfl::STATE_ToPlayGame && btfl::ShouldAutoUpdateGame() )
-						btfl::SetState(btfl::STATE_ToUpdateGame);
-				}
-			}
-
-			break;
-		}
+		HandleGameUpdateWebRequest(event);
+		break;
+	case WEB_LookForEssenceGameUpdate:
+		HandleEssenceGameUpdateWebRequest(event);
+		break;
+	case WEB_GetEssencePassword:
+		HandleEssencePasswordWebRequest(event);
 		break;
 	}
-	
 }
 
-void MainPanel::UnzipGameFiles()
+void MainPanel::HandleInstallWebRequest(wxWebRequestEvent& event)
 {
-	if ( !wxFileName::Exists(btfl::GetInstallFileName().GetFullPath()) )
+	bool bIsInstallingPreview = btfl::GetEssenceState() == btfl::STATE_InstallingGameEssence || btfl::GetEssenceState() == btfl::STATE_UpdatingGameEssence;
+	
+	switch ( event.GetState() )
 	{
-		m_gaugeResult = GAUGE_InstallationUnsuccessful;
+	case wxWebRequest::State_Completed:
+	{
+		m_nextGaugeValue = 95;
+		switch ( btfl::GetState() )
+		{
+		case btfl::STATE_InstallingGame:
+			m_nextGaugeLabel = "Installing game...";
+			break;
+		case btfl::STATE_UpdatingGame:
+			m_nextGaugeLabel = "Updating game...";
+			break;
+		}
+
+		switch ( btfl::GetEssenceState() )
+		{
+		case btfl::STATE_InstallingGameEssence:
+			m_nextGaugeLabel = "Installing preview...";
+			break;
+		case btfl::STATE_UpdatingGameEssence:
+			m_nextGaugeLabel = "Updating game...";
+			break;
+		}
+
+		wxFileName fileName(event.GetDataFile());
+		fileName.SetName("BTFL" + bIsInstallingPreview ? "_Preview" : "");
+		fileName.SetExt("zip");
+
+		if ( wxRenameFile(event.GetDataFile(), fileName.GetFullPath()) )
+		{
+			UnzipGameFiles(
+				fileName.	GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR),
+				fileName.GetFullName(),
+				bIsInstallingPreview ? GaugeResult::GAUGE_EssenceInstallationSuccessful : GaugeResult::GAUGE_InstallationSuccessful,
+				bIsInstallingPreview ? GaugeResult::GAUGE_EssenceInstallationUnsuccessful : GaugeResult::GAUGE_InstallationUnsuccessful
+			);
+		}
+		else
+		{
+			wxMessageBox(wxString("There was a problem when installing the ") << (bIsInstallingPreview ? "preview" : "game") <<
+				".\nPlease try again and, if the problem persists, contact the team at the Discord Server.");
+			btfl::RestoreLastState();
+		}
+
+		break;
+	}
+	case wxWebRequest::State_Idle:
+		m_nextGaugeLabel = "Connecting...";
+		break;
+	case wxWebRequest::State_Active:
+		m_nextGaugeLabel = "Downloading files...";
+		break;
+	case wxWebRequest::State_Failed:
+	case wxWebRequest::State_Cancelled:
+		wxMessageBox(wxString("There was a problem when downloading the ") << (bIsInstallingPreview ? "preview" : "game") << ".\nPlease check your internet connection and try again.");
+
+		if ( bIsInstallingPreview )
+			btfl::RestoreLastEssenceState();
+		else
+			btfl::RestoreLastState();
+	
+		break;
+	}
+}
+
+void MainPanel::HandleLauncherUpdateWebRequest(wxWebRequestEvent& event)
+{
+	if ( event.GetState() == wxWebRequest::State_Completed )
+	{
+		wxStringInputStream* sstream = (wxStringInputStream*)event.GetResponse().GetStream();
+		wxStringOutputStream outStream;
+		sstream->Read(outStream);
+
+		if ( !outStream.GetString().IsEmpty() && btfl::GetInstalledLauncherVersion() != outStream.GetString() )
+		{
+			wxMessageDialog dialog(
+				nullptr,
+				"There's an update available for the Launcher. Press okay to continue with the installation.",
+				wxString::FromAscii(wxMessageBoxCaptionStr),
+				wxOK | wxCANCEL
+			);
+
+			if ( dialog.ShowModal() == wxID_OK )
+				btfl::DoUpdateLauncher();
+		}
+	}
+}
+
+void MainPanel::HandleGameUpdateWebRequest(wxWebRequestEvent& event)
+{
+	if ( event.GetState() == wxWebRequest::State_Completed )
+	{
+		wxStringInputStream* sstream = (wxStringInputStream*)event.GetResponse().GetStream();
+		wxStringOutputStream outStream;
+		sstream->Read(outStream);
+
+		if ( !outStream.GetString().IsEmpty() )
+		{
+			btfl::SetLatestGameVersion(outStream.GetString());
+			if ( btfl::GetInstalledGameVersion() != outStream.GetString() )
+			{
+				if ( btfl::GetState() == btfl::STATE_ToPlayGame && btfl::ShouldAutoUpdateGame() )
+					btfl::SetState(btfl::STATE_ToUpdateGame);
+			}
+		}
+	}
+}
+
+void MainPanel::HandleEssenceGameUpdateWebRequest(wxWebRequestEvent& event)
+{
+	if ( event.GetState() == wxWebRequest::State_Completed )
+	{
+		wxStringInputStream* sstream = (wxStringInputStream*)event.GetResponse().GetStream();
+		wxStringOutputStream outStream;
+		sstream->Read(outStream);
+
+		if ( !outStream.GetString().IsEmpty() )
+		{
+			btfl::SetLatestEssenceGameVersion(outStream.GetString());
+			if ( btfl::GetInstalledEssenceGameVersion() != outStream.GetString() )
+			{
+				if ( btfl::GetEssenceState() == btfl::STATE_ToPlayGameEssence )
+					btfl::SetEssenceState(btfl::STATE_ToUpdateGameEssence);
+			}
+		}
+	}
+}
+
+void MainPanel::HandleEssencePasswordWebRequest(wxWebRequestEvent& event)
+{
+	if ( event.GetState() == wxWebRequest::State_Completed )
+	{
+		wxStringInputStream* sstream = (wxStringInputStream*)event.GetResponse().GetStream();
+		wxStringOutputStream outStream;
+		sstream->Read(outStream);
+
+		if ( !outStream.GetString().IsEmpty() )
+		{
+			btfl::SetEncryptedEssencePassword(outStream.GetString());
+			if ( btfl::GetUserEssencePassword() != utils::crypto::GetDecryptedString(outStream.GetString()) )
+			{
+				btfl::UninstallEssenceGame(false);
+				btfl::SetEssenceState(btfl::STATE_NoneEssence);
+			}
+		}
+	}
+}
+
+void MainPanel::UnzipGameFiles(const wxString& filePath, const wxString& fileName, GaugeResult onSuccess, GaugeResult onFailure)
+{
+	if ( !wxFileName::Exists(filePath) )
+	{
+		m_gaugeResult = onFailure;
 		m_nextGaugeValue = 100;
 		return;
 	}
 
-	std::thread thread([&]()
+	std::thread thread([&, filePath, fileName, onSuccess, onFailure]()
 		{
-			wxString sPath(btfl::GetInstallFileName().GetFullPath());
-
 			{
-				wxFFileInputStream inputStream(sPath + "BTFL.zip");
+				wxFFileInputStream inputStream(filePath + fileName);
 				if ( !inputStream.IsOk() )
 				{
 					wxMutexLocker locker(m_nextGaugeValueMutex);
-					m_gaugeResult = GAUGE_InstallationUnsuccessful;
+					m_gaugeResult = onFailure;
 					m_nextGaugeValue = 100;
 					return;
 				}
@@ -717,12 +1007,12 @@ void MainPanel::UnzipGameFiles()
 					if ( !ZIPStream.OpenEntry(*pZIPEntry) || !ZIPStream.CanRead() )
 					{
 						wxMutexLocker locker(m_nextGaugeValueMutex);
-						m_gaugeResult = GAUGE_InstallationUnsuccessful;
+						m_gaugeResult = onFailure;
 						m_nextGaugeValue = 100;
 						return;
 					}
 
-					wxString sOutputFile = sPath + pZIPEntry->GetName();
+					wxString sOutputFile = filePath + pZIPEntry->GetName();
 
 					if ( pZIPEntry->IsDir() ) {
 						int perm = pZIPEntry->GetMode();
@@ -733,7 +1023,7 @@ void MainPanel::UnzipGameFiles()
 						if ( !outputFileStream.IsOk() )
 						{
 							wxMutexLocker locker(m_nextGaugeValueMutex);
-							m_gaugeResult = GAUGE_InstallationUnsuccessful;
+							m_gaugeResult = onFailure;
 							m_nextGaugeValue = 100;
 							delete pZIPEntry;
 							return;
@@ -748,9 +1038,9 @@ void MainPanel::UnzipGameFiles()
 				}
 			}
 
-			wxRemoveFile(sPath + "BTFL.zip");
+			wxRemoveFile(filePath + fileName);
 			wxMutexLocker locker(m_nextGaugeValueMutex);
-			m_gaugeResult = GAUGE_InstallationSuccessful;
+			m_gaugeResult = onSuccess;
 			m_nextGaugeValue = 100;
 		}
 	);
@@ -796,6 +1086,34 @@ void MainPanel::ChangeToRandomBgImage()
 	}
 
 	m_bgRatio = (double)m_background.GetWidth() / m_background.GetHeight();
+}
+
+void MainPanel::PromptForBecomingEssence()
+{
+	if ( btfl::GetState() < btfl::LauncherState::STATE_ToInstallGame )
+	{
+		wxMessageBox("You must verify your ISO before becoming an Essence!");
+		return;
+	}
+	else if ( btfl::GetEssenceState() != btfl::LauncherEssenceState::STATE_NoneEssence )
+	{
+		wxMessageBox("Already an Essence.");
+		return;
+	}
+
+	wxPasswordEntryDialog passwordDialog(nullptr, "Please, as an Essence, input your special password.", "Welcome, Essence Of Dormin.");
+	
+	if ( passwordDialog.ShowModal() == wxID_OK )
+	{
+		if ( passwordDialog.GetValue() == utils::crypto::GetDecryptedString(btfl::GetEncryptedEssencePassword()) )
+		{
+			btfl::SetUserEssencePassword(passwordDialog.GetValue());
+			btfl::SetEssenceState(btfl::LauncherEssenceState::STATE_ToInstallGameEssence);
+			wxMessageBox("Welcome, Essence");
+		}
+		else
+			wxMessageBox("You are not worthy.");
+	}
 }
 
 void MainPanel::OnFrameButtons(wxSFShapeMouseEvent& event)
@@ -867,6 +1185,31 @@ void MainPanel::OnSettings(wxSFShapeMouseEvent& event)
 	m_mainFrame->ShowSettings();
 }
 
+void MainPanel::OnInstallEssence(wxSFShapeMouseEvent& event)
+{
+	DoInstallEssenceGame();
+}
+
+void MainPanel::OnPlayEssence(wxSFShapeMouseEvent& event)
+{
+	wxString fullName(btfl::GetEssenceInstallFileName().GetFullPath() + "BTFL_Preview.exe");
+	if ( wxFileName::Exists(fullName) )
+	{
+		wxFileType* pFileType = wxTheMimeTypesManager->GetFileTypeFromExtension("exe");
+		wxString sCommand = pFileType->GetOpenCommand(fullName);
+		delete pFileType;
+
+		if ( wxExecute(sCommand + " \"" + utils::crypto::GetEncryptedString("BTFL is cool") + "\"") != -1 )
+		{
+			if ( btfl::GetSettings().bCloseSelfOnGameLaunch )
+				m_mainFrame->Close();
+		}
+		else
+			wxMessageBox("There was a problem when launching the preview."
+				" Please make sure the download isn't corrupted and try again");
+	}
+}
+
 void MainPanel::DrawBackground(wxDC& dc, bool fromPaint)
 {
 	BackgroundImageCanvas::DrawBackground(dc, fromPaint);
@@ -886,19 +1229,25 @@ void MainPanel::DrawForeground(wxDC& dc, bool fromPaint)
 
 	dc.SetTextForeground(wxColour(255, 255, 255));
 	dc.SetFont(m_fileLabelFont);
-	dc.DrawText(m_fileLabel, m_xFLabel, m_yFLabel);
+	dc.DrawText(m_fileLabel, m_fileLabelPos);
 
 	dc.SetTextForeground(m_fileDescColour);
 	dc.SetFont(m_fileDescFont);
-	dc.DrawText(m_fileDesc, m_xFDesc, m_yFDesc);
+	dc.DrawText(m_fileDesc, m_fileDescPos);
 
 	dc.SetUserScale(m_fileBmpScale, m_fileBmpScale);
-	dc.DrawBitmap(m_fileContainer, m_xFCont, m_yFCont, true);
-	dc.DrawBitmap(m_fileBmp, m_xFBmp, m_yFBmp, true);
+	dc.DrawBitmap(m_fileContainer, m_fileContPos.x, m_fileContPos.y, true);
+	dc.DrawBitmap(m_fileBmp, m_fileBmpPos.x, m_fileBmpPos.y, true);
 	dc.SetUserScale(1.0, 1.0);
 
 	dc.SetTextForeground(wxColour(255, 255, 255, 95));
 	dc.DrawText(btfl::GetInstalledLauncherVersion(), m_versionLabelPos);
+
+	if ( btfl::GetEssenceState() != btfl::STATE_NoneEssence )
+	{
+		dc.SetTextForeground(wxColour(52, 199, 226));
+		dc.DrawText("Essence Of Dormin", 5, 5);
+	}
 }
 
 void MainPanel::OnSize(wxSizeEvent& event)
@@ -937,7 +1286,7 @@ void MainPanel::OnMouseMove(wxMouseEvent& event)
 		{
 			bool bIsHoveringFileCont = m_mainButton->GetId() == btfl::LauncherState::STATE_ToVerifyIso
 				&& wxRect(
-					wxPoint(m_xFBmp, m_yFBmp) * m_fileBmpScale,
+					m_fileBmpPos * m_fileBmpScale,
 					m_fileBmp.GetSize() * m_fileBmpScale
 				).Contains(event.GetPosition());
 
@@ -952,14 +1301,31 @@ void MainPanel::OnMouseMove(wxMouseEvent& event)
 
 void MainPanel::OnLeftDown(wxMouseEvent& event) {
 	BackgroundImageCanvas::OnLeftDown(event);
+	
+	wxRect eRect(wxPoint(479, 140), wxPoint(489, 154));
+	if ( eRect.Contains(event.GetPosition()) )
+	{
+		PromptForBecomingEssence();
+	}
 
 	if ( m_bShouldDeleteUpdateBtn )
 	{
-		DestroyUpdateButton();
+		DestroyButton(m_updateButton);
 		RepositionAll();
 		Refresh();
 
 		m_bShouldDeleteUpdateBtn = false;
+		SetCursor(wxCURSOR_DEFAULT);
+		return;
+	}
+
+	if ( m_bShouldDeleteEssenceUpdateBtn )
+	{
+		DestroyButton(m_essenceUpdateButton);
+		RepositionAll();
+		Refresh();
+
+		m_bShouldDeleteEssenceUpdateBtn = false;
 		SetCursor(wxCURSOR_DEFAULT);
 		return;
 	}

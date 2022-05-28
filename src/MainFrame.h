@@ -38,6 +38,7 @@ public:
 	SecondaryPanel* GetSecondaryPanel() { return m_seconPanel; }
 
 	void SetState(btfl::LauncherState state);
+	void SetEssenceState(btfl::LauncherEssenceState state);
 
 	void ShowMainPanel();
 	void ShowSecondaryPanel();

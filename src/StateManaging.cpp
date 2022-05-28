@@ -41,13 +41,17 @@ void btfl::SQLDatabase::CreateAllTables()
 {
 	wxArrayString tUserData;
 	tUserData.Add("user_state INTEGER");
+	tUserData.Add("user_essence_state INTEGER");
 	tUserData.Add("has_agreed_to_disclaimer INTEGER");
+	tUserData.Add("essence_password");
 	tUserData.Add("iso_file_path TEXT");
 	tUserData.Add("iso_region INTEGER");
 
 	wxArrayString tLauncherData;
 	tLauncherData.Add("install_path TEXT");
+	tLauncherData.Add("essence_install_path TEXT");
 	tLauncherData.Add("installed_game_version TEXT");
+	tLauncherData.Add("installed_essence_game_version TEXT");
 	tLauncherData.Add("settings_xml TEXT");
 
 	try
@@ -223,6 +227,8 @@ wxSQLite3Statement btfl::SQLDatabase::ConstructUpdateStatement(const btfl::SQLEn
 /////////////////////// Separate Functions /////////////////////
 ////////////////////////////////////////////////////////////////
 
+btfl::SQLDatabase* pDatabase;
+
 
 bool ShouldSaveState(btfl::LauncherState state)
 {
@@ -230,6 +236,11 @@ bool ShouldSaveState(btfl::LauncherState state)
 		return false;
 
 	return true;
+}
+
+bool ShouldSaveEssenceState(btfl::LauncherEssenceState state)
+{
+	return state != btfl::STATE_InstallingGameEssence && state != btfl::STATE_UpdatingGameEssence;
 }
 
 void CleanUpOldBuild()
@@ -289,21 +300,43 @@ void CleanUpOldBuild()
 			wxRemoveFile(str);
 		}
 	}
+
+	try
+	{
+		!pDatabase->ExecuteScalar("SELECT EXISTS(SELECT essence_password FROM user_data WHERE rowid = 1)");
+	}
+	catch ( wxSQLite3Exception e )
+	{
+		pDatabase->ExecuteUpdate("ALTER TABLE launcher_data ADD COLUMN essence_install_path TEXT;");
+		pDatabase->ExecuteUpdate("ALTER TABLE launcher_data ADD COLUMN installed_essence_game_version TEXT;");
+		pDatabase->ExecuteUpdate("ALTER TABLE user_data ADD COLUMN user_essence_state INTEGER;");
+		pDatabase->ExecuteUpdate("ALTER TABLE user_data ADD COLUMN essence_password INTEGER;");
+
+		btfl::SetEssenceInstallPath(wxGetCwd() + "/");
+	}
 }
 
 class InstallerDownloader;
 
-btfl::SQLDatabase* pDatabase;
 btfl::LauncherState currentState = btfl::LauncherState::STATE_Initial;
 btfl::LauncherState lastState = btfl::LauncherState::STATE_Initial;
+btfl::LauncherEssenceState currentEssenceState = btfl::LauncherEssenceState::STATE_NoneEssence;
+btfl::LauncherEssenceState lastEssenceState = btfl::LauncherEssenceState::STATE_NoneEssence;
 wxFileName isoFileName;
 bool bHasUserAgreedToDisclaimer = false;
 iso::ISO_Region isoRegion = iso::ISO_Region::ISO_Invalid;
 
 wxFileName installFileName;
+wxFileName essenceInstallFileName;
+
 wxString sInstalledGameVersion;
-wxString sInstalledLauncherVersion = "v1.0.13";
+wxString sInstalledEssenceGameVersion;
+wxString sInstalledLauncherVersion = "v1.0.15";
 wxString sLatestGameVersion;
+wxString sLatestEssenceGameVersion;
+
+wxString sEncryptedEssencePassword;
+wxString sUserEssencePassword;
 
 MainFrame* pMainFrame;
 
@@ -407,29 +440,34 @@ void btfl::Init()
 	wxSQLite3Database::InitializeSQLite();
 	pDatabase = new btfl::SQLDatabase();
 	pDatabase->Open("./LauncherData.db", utils::crypto::GetDecryptedString(db_encryption_key));
-
+	
 	if ( !pDatabase->Init() )
 	{
 		btfl::SQLEntry userEntry("user_data");
 		userEntry.integers["user_state"] = currentState;
+		userEntry.integers["user_essence_state"] = currentEssenceState;
 		userEntry.integers["has_agreed_to_disclaimer"] = false;
 		userEntry.integers["iso_region"] = iso::ISO_Region::ISO_Invalid;
 		userEntry.strings["iso_file_path"] = isoFileName.GetFullPath();
 
 		btfl::SQLEntry launcherEntry("launcher_data");
-		launcherEntry.strings["install_path"] = installFileName.GetFullPath();;
+		launcherEntry.strings["install_path"] = installFileName.GetFullPath();
+		launcherEntry.strings["essence_install_path"] = essenceInstallFileName.GetFullPath();
 		launcherEntry.strings["installed_game_version"] = sInstalledGameVersion;
+		launcherEntry.strings["installed_essence_game_version"] = sInstalledEssenceGameVersion;
 		launcherEntry.strings["settings_xml"] = "";
 
 		pDatabase->InsertSQLEntry(userEntry);
 		pDatabase->InsertSQLEntry(launcherEntry);
 
 		SetInstallPath(wxGetCwd() + "/");
+		SetEssenceInstallPath(wxGetCwd() + "/");
 
 		btfl::SetState(btfl::LauncherState::STATE_ToSelectIso);
 	}
 	else
 	{
+		CleanUpOldBuild();
 		btfl::LoadLauncher(pDatabase);
 	}
 
@@ -439,7 +477,8 @@ void btfl::Init()
 
 	pMainFrame->GetMainPanel()->DoLookForLauncherUpdates();
 	pMainFrame->GetMainPanel()->DoLookForGameUpdates();
-
+	pMainFrame->GetMainPanel()->DoLookForEssenceGameUpdates();
+	pMainFrame->GetMainPanel()->DoCheckEssencePassword();
 
 	btfl::DeleteInstallerIfPresent();
 
@@ -448,7 +487,10 @@ void btfl::Init()
 		btfl::SetState(btfl::STATE_ToInstallGame);
 	}
 
-	CleanUpOldBuild();
+	if ( currentEssenceState == btfl::STATE_ToPlayGameEssence && !wxFileName::Exists(essenceInstallFileName.GetFullPath() + "BTFL_Preview.exe") )
+	{
+		btfl::SetEssenceState(btfl::STATE_ToInstallGameEssence);
+	}
 }
 
 void btfl::ShutDown()
@@ -495,6 +537,88 @@ void btfl::RestoreLastState()
 	btfl::SetState(lastState);
 }
 
+void btfl::SetEssenceState(btfl::LauncherEssenceState state)
+{
+	if ( state == currentEssenceState )
+		return;
+
+	lastEssenceState = currentEssenceState;
+
+	currentEssenceState = state;
+	pMainFrame->SetEssenceState(state);
+
+	if ( ShouldSaveEssenceState(state) )
+	{
+		btfl::SQLEntry sqlEntry("user_data");
+		sqlEntry.integers["user_essence_state"] = currentEssenceState;
+
+		UpdateDatabase(sqlEntry);
+	}
+}
+
+btfl::LauncherEssenceState btfl::GetEssenceState()
+{
+	return currentEssenceState;
+}
+
+void btfl::RestoreLastEssenceState()
+{
+	btfl::SetEssenceState(lastEssenceState);
+}
+
+bool btfl::IsUserAnEssence()
+{
+	return currentEssenceState != btfl::STATE_NoneEssence;
+}
+
+bool btfl::UninstallGame(bool showMessages)
+{
+	if ( !wxFileName::Exists(installFileName.GetFullPath()) )
+	{
+		if ( showMessages )
+			wxMessageBox("The game isn't installed or has been moved. Uninstallation unsuccessful.");
+		return false;
+	}
+
+	if ( wxFileName::Rmdir(installFileName.GetFullPath(), wxPATH_RMDIR_RECURSIVE) )
+	{
+		if ( showMessages )
+			wxMessageBox("The game has been successfully uninstalled.");
+		btfl::SetState(btfl::STATE_ToInstallGame);
+		return true;
+	}
+	else
+	{
+		if ( showMessages )
+			wxMessageBox("Something went wrong. Uninstallation unsuccessful");
+		return false;
+	}
+}
+
+bool btfl::UninstallEssenceGame(bool showMessages)
+{
+	if ( !wxFileName::Exists(essenceInstallFileName.GetFullPath()) )
+	{
+		if ( showMessages )
+			wxMessageBox("The game isn't installed or has been moved. Uninstallation unsuccessful.");
+		return false;
+	}
+
+	if ( wxFileName::Rmdir(essenceInstallFileName.GetFullPath(), wxPATH_RMDIR_RECURSIVE) )
+	{
+		if ( showMessages )
+			wxMessageBox("The game has been successfully uninstalled.");
+		btfl::SetEssenceState(btfl::STATE_ToInstallGameEssence);
+		return true;
+	}
+	else
+	{
+		if ( showMessages )
+			wxMessageBox("Something went wrong. Uninstallation unsuccessful");
+		return false;
+	}
+}
+
 void btfl::SetIsoRegion(iso::ISO_Region region)
 {
 	isoRegion = region;
@@ -525,7 +649,12 @@ wxString btfl::GetInstalledLauncherVersion()
 	return sInstalledLauncherVersion;
 }
 
-void btfl::SetLatestGameVerstion(const wxString& version)
+wxString btfl::GetInstalledEssenceGameVersion()
+{
+	return sInstalledEssenceGameVersion;
+}
+
+void btfl::SetLatestGameVersion(const wxString& version)
 {
 	sLatestGameVersion = version;
 }
@@ -534,6 +663,41 @@ wxString btfl::GetLatestGameVersion()
 {
 	return sLatestGameVersion;
 }
+
+void btfl::SetLatestEssenceGameVersion(const wxString& version)
+{
+	sLatestEssenceGameVersion = version;
+}
+
+wxString btfl::GetLatestEssenceGameVersion()
+{
+	return sLatestEssenceGameVersion;
+}
+
+void btfl::SetEncryptedEssencePassword(const wxString& password)
+{
+	sEncryptedEssencePassword = password;
+}
+
+wxString btfl::GetEncryptedEssencePassword()
+{
+	return sEncryptedEssencePassword;
+}
+
+void btfl::SetUserEssencePassword(const wxString& password)
+{
+	sUserEssencePassword = password;
+
+	btfl::SQLEntry sqlEntry("user_data");
+	sqlEntry.strings["essence_password"] = sUserEssencePassword;
+	btfl::UpdateDatabase(sqlEntry);
+}
+
+wxString btfl::GetUserEssencePassword()
+{
+	return sUserEssencePassword;
+}
+
 
 bool btfl::ShouldAutoUpdateGame()
 {
@@ -564,15 +728,19 @@ void btfl::LoadLauncher(btfl::SQLDatabase* database)
 		isoFileName.Assign(result.GetAsString("iso_file_path"));
 		isoRegion = (iso::ISO_Region)result.GetInt("iso_region");
 		bHasUserAgreedToDisclaimer = result.GetInt("has_agreed_to_disclaimer");
+		sUserEssencePassword = result.GetAsString("essence_password");
 
 		SetState((btfl::LauncherState)result.GetInt("user_state"));
+		SetEssenceState((btfl::LauncherEssenceState)result.GetInt("user_essence_state"));
 	}
 
 	result = database->ExecuteQuery("SELECT * FROM launcher_data WHERE rowid = 1;");
 	if ( result.NextRow() )
 	{
 		installFileName.Assign(result.GetAsString("install_path"));
+		essenceInstallFileName.Assign(result.GetAsString("essence_install_path"));
 		sInstalledGameVersion = result.GetAsString("installed_game_version");
+		sInstalledEssenceGameVersion = result.GetAsString("installed_essence_game_version");
 
 		wxStringInputStream settingsStream(result.GetAsString("settings_xml"));
 		if ( settingsStream.GetSize() )
@@ -650,6 +818,33 @@ void btfl::SetInstallPath(const wxString& installPath)
 
 	btfl::SQLEntry sqlEntry("launcher_data");
 	sqlEntry.strings["install_path"] = installFileName.GetFullPath();
+	UpdateDatabase(sqlEntry);
+}
+
+const wxFileName& btfl::GetEssenceInstallFileName()
+{
+	return essenceInstallFileName;
+}
+
+void btfl::SetEssenceInstallPath(const wxString& installPath)
+{
+	wxFileName newFileName(installPath);
+	newFileName.AppendDir("Beyond The Forbidden Lands Preview");
+
+	if ( currentEssenceState == btfl::STATE_ToPlayGameEssence || currentEssenceState == btfl::STATE_ToUpdateGameEssence )
+	{
+		wxBusyCursor busyCursor;
+		if ( !wxFileName::Exists(newFileName.GetFullPath()) )
+			wxFileName::Mkdir(newFileName.GetFullPath());
+
+		if ( !wxRenameFile(essenceInstallFileName.GetFullPath(), newFileName.GetFullPath()) )
+			return;
+	}
+
+	essenceInstallFileName = newFileName;
+
+	btfl::SQLEntry sqlEntry("launcher_data");
+	sqlEntry.strings["essence_install_path"] = essenceInstallFileName.GetFullPath();
 	UpdateDatabase(sqlEntry);
 }
 

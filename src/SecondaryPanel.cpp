@@ -2,6 +2,8 @@
 #include "Scrollbar.h"
 #include "MainFrame.h"
 
+#include <wx/choicdlg.h>
+
 #include "wxmemdbg.h"
 
 DisclaimerPanel::DisclaimerPanel(SecondaryPanel* parent,
@@ -232,7 +234,7 @@ void SecondaryPanel::ShowSettings()
 		m_mainSettingsGrid->AcceptChild(wxT("All"));
 		m_mainSettingsGrid->SetFill(*wxTRANSPARENT_BRUSH);
 		m_mainSettingsGrid->SetBorder(*wxTRANSPARENT_PEN);
-		m_mainSettingsGrid->SetDimensions(5, 2);
+		m_mainSettingsGrid->SetDimensions(6, 2);
 		m_mainSettingsGrid->SetCellSpace(15);
 		m_mainSettingsGrid->SetStyle(0);
 
@@ -282,6 +284,25 @@ void SecondaryPanel::ShowSettings()
 		m_mainSettingsGrid->AppendToGrid(pCloseOnGameLaunchLabel);
 		m_mainSettingsGrid->AppendToGrid(m_closeSelfOnGameLaunch);
 		m_mainSettingsGrid->AppendToGrid(m_uninstallButton);
+
+		ReloadSettings();
+	}
+
+	if ( btfl::IsUserAnEssence() && !m_essenceInstallPath )
+	{
+		wxSFTextShape* pEssenceInstallPathLabel = (wxSFTextShape*)pManager->AddShape(CLASSINFO(wxSFTextShape), false);
+		pEssenceInstallPathLabel->SetTextColour(*wxWHITE);
+		pEssenceInstallPathLabel->SetFont(wxFontInfo(14).Bold().FaceName("Lora"));
+		SetShapeStyle(pEssenceInstallPathLabel);
+		pEssenceInstallPathLabel->SetText("Essence Install Path                                     ");
+
+		m_essenceInstallPath = (wxSFTextShape*)pManager->AddShape(CLASSINFO(wxSFTextShape), false);
+		m_essenceInstallPath->SetTextColour(*wxWHITE);
+		m_essenceInstallPath->SetFont(wxFontInfo(12).FaceName("Lora"));
+		SetShapeStyle(m_essenceInstallPath);
+
+		m_mainSettingsGrid->InsertToGrid(2, pEssenceInstallPathLabel);
+		m_mainSettingsGrid->InsertToGrid(3, m_essenceInstallPath);
 
 		ReloadSettings();
 	}
@@ -357,6 +378,27 @@ void SecondaryPanel::SelectInstallPath()
 	}
 }
 
+void SecondaryPanel::SelectEssenceInstallPath()
+{
+	btfl::LauncherEssenceState currentState = btfl::GetEssenceState();
+	if ( currentState == btfl::STATE_InstallingGameEssence || currentState == btfl::STATE_UpdatingGameEssence )
+	{
+		wxMessageBox("You can't modify your installation path while an installation is in progress!");
+		return;
+	}
+
+	wxDirDialog dirDialog(nullptr, _("Please select a folder..."),
+		"./", wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+
+	if ( dirDialog.ShowModal() == wxID_OK )
+	{
+		btfl::SetEssenceInstallPath(dirDialog.GetPath() + "/");
+		m_essenceInstallPath->SetText(GetSanitizedInstallPathForDisplay(btfl::GetEssenceInstallFileName().GetFullPath()));
+		RepositionAll();
+		Refresh();
+	}
+}
+
 void SecondaryPanel::SetSettings(const btfl::Settings& settings)
 {
 	m_settings.bLookForUpdates = settings.bLookForUpdates;
@@ -417,8 +459,27 @@ void SecondaryPanel::OnCloseOnGameLaunchChange(wxSFShapeMouseEvent& event)
 void SecondaryPanel::OnUninstall(wxSFShapeMouseEvent& event)
 {
 	btfl::LauncherState currentState = btfl::GetState();
-	if ( currentState != btfl::STATE_ToPlayGame && currentState != btfl::STATE_ToUpdateGame )
+	btfl::LauncherEssenceState essenceState = btfl::GetEssenceState();
+
+	if ( currentState != btfl::STATE_ToPlayGame && currentState != btfl::STATE_ToUpdateGame &&
+		essenceState != btfl::STATE_ToPlayGameEssence && essenceState != btfl::STATE_ToUpdateGameEssence)
 		return;
+
+	bool bIsUninstallingPreview = false;
+
+	if ( essenceState == btfl::STATE_ToPlayGameEssence || essenceState == btfl::STATE_ToUpdateGameEssence )
+	{
+		wxArrayString choices;
+		choices.Add("Preview");
+		choices.Add("Standard release");
+
+		wxSingleChoiceDialog choiceDialog(nullptr, "Which version of the game would you like to delete?", "Please choose the desired game to uninstall", choices);
+
+		if ( choiceDialog.ShowModal() != wxID_OK )
+			return;
+
+		bIsUninstallingPreview = choiceDialog.GetStringSelection() == "Preview";
+	}
 
 	wxMessageDialog dialog(
 		nullptr,
@@ -428,24 +489,12 @@ void SecondaryPanel::OnUninstall(wxSFShapeMouseEvent& event)
 	);
 
 	if ( dialog.ShowModal() != wxID_OK )
-		return;		
-
-	wxFileName fileName = btfl::GetInstallFileName();
-	if ( !wxFileName::Exists(fileName.GetFullPath()) )
-	{
-		wxMessageBox("The game isn't installed or has been moved. Uninstallation unsuccessful.");
 		return;
-	}
 
-	if ( wxFileName::Rmdir(fileName.GetFullPath(), wxPATH_RMDIR_RECURSIVE) )
-	{
-		wxMessageBox("The game has been successfully uninstalled.");
-		btfl::SetState(btfl::STATE_ToInstallGame);
-	}
+	if ( bIsUninstallingPreview )
+		btfl::UninstallEssenceGame();
 	else
-	{
-		wxMessageBox("Something went wrong. Uninstallation unsuccessful");
-	}
+		btfl::UninstallGame();
 }
 
 void SecondaryPanel::RepositionAll()
@@ -494,6 +543,16 @@ void SecondaryPanel::RepositionAll()
 			(m_installPath->GetAbsolutePosition().x - (m_installPathBmp.GetWidth() * m_fInstallPathBmpScale) - 5) / m_fInstallPathBmpScale,
 			m_installPath->GetAbsolutePosition().y / m_fInstallPathBmpScale
 		);
+
+		if ( m_essenceInstallPath )
+		{
+			m_essenceInstallPathBmpPos = wxPoint(
+				(m_essenceInstallPath->GetAbsolutePosition().x - (m_installPathBmp.GetWidth() * m_fInstallPathBmpScale) - 5) / m_fInstallPathBmpScale,
+				m_essenceInstallPath->GetAbsolutePosition().y / m_fInstallPathBmpScale
+			);
+		}
+		else
+			m_essenceInstallPathBmpPos = wxPoint(-100, -100);
 	}
 }
 
@@ -506,6 +565,7 @@ void SecondaryPanel::DeleteSettingsShapes()
 	pManager->RemoveShape(m_mainSettingsGrid, false);
 	
 	m_installPath = nullptr;
+	m_essenceInstallPath = nullptr;
 	m_autoUpdate = nullptr;
 	m_closeSelfOnGameLaunch = nullptr;
 	m_uninstallButton = nullptr;
@@ -538,6 +598,10 @@ void SecondaryPanel::DrawForeground(wxDC& dc, bool fromPaint)
 	{
 		dc.SetUserScale(m_fInstallPathBmpScale, m_fInstallPathBmpScale);
 		dc.DrawBitmap(m_installPathBmp, m_installPathBmpPos.x, m_installPathBmpPos.y, true);
+
+		if ( btfl::GetEssenceState() != btfl::STATE_NoneEssence )
+			dc.DrawBitmap(m_installPathBmp, m_essenceInstallPathBmpPos.x, m_essenceInstallPathBmpPos.y, true);
+		
 		dc.SetUserScale(1.0, 1.0);
 	}
 }
@@ -576,6 +640,11 @@ void SecondaryPanel::OnLeftDown(wxMouseEvent& event)
 	{
 		SelectInstallPath();
 	}
+
+	if ( m_bIsHoveringEssenceInstallPath )
+	{
+		SelectEssenceInstallPath();
+	}
 }
 
 void SecondaryPanel::OnLeftUp(wxMouseEvent& event)
@@ -613,6 +682,18 @@ void SecondaryPanel::OnMouseMove(wxMouseEvent& event)
 			SetCursor((wxStockCursor)((wxCURSOR_DEFAULT * !bIsHoveringInstallPath) + (wxCURSOR_CLOSED_HAND * bIsHoveringInstallPath)));
 			m_bIsHoveringInstallPath = bIsHoveringInstallPath;
 		}
+
+		wxRect essenceInstallPathBmpRect(
+			m_essenceInstallPathBmpPos * m_fInstallPathBmpScale,
+			m_installPathBmp.GetSize() * m_fInstallPathBmpScale
+		);
+
+		bool bIsHoveringEssenceInstallPath = essenceInstallPathBmpRect.Contains(event.GetPosition());
+		if ( bIsHoveringEssenceInstallPath != m_bIsHoveringEssenceInstallPath )
+		{
+			SetCursor((wxStockCursor)((wxCURSOR_DEFAULT * !bIsHoveringEssenceInstallPath) + (wxCURSOR_CLOSED_HAND * bIsHoveringEssenceInstallPath)));
+			m_bIsHoveringEssenceInstallPath = bIsHoveringEssenceInstallPath;
+		}
 	}
 }
 
@@ -621,4 +702,7 @@ void SecondaryPanel::ReloadSettings()
 	m_installPath->SetText(GetSanitizedInstallPathForDisplay(btfl::GetInstallFileName().GetFullPath()));
 	m_autoUpdate->SetState(m_settings.bLookForUpdates);
 	m_closeSelfOnGameLaunch->SetState(m_settings.bCloseSelfOnGameLaunch);
+
+	if ( m_essenceInstallPath )
+		m_essenceInstallPath->SetText(GetSanitizedInstallPathForDisplay(btfl::GetEssenceInstallFileName().GetFullPath()));
 }

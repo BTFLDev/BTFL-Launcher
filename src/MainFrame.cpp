@@ -26,7 +26,7 @@ MainFrame::MainFrame(wxWindow* parent,
 	m_copyrightPanel = new wxPanel(this, -1, wxDefaultPosition, wxSize(-1, 40), wxBORDER_NONE);
 	m_copyrightPanel->SetBackgroundColour(wxColour(0, 0, 0));
 
-	wxStaticText* copyright = new wxStaticText(m_copyrightPanel, -1, "Beyond The Forbidden Lands is officialy classified as a modification of \"Shadow of the Colossus\" (2005) and ownership of the original game is required to play.");
+	wxStaticText* copyright = new wxStaticText(m_copyrightPanel, -1, "Beyond The Forbidden Lands is officially classified as a modification of \"Shadow of the Colossus\" (2005) and ownership of the original game is required to play.");
 	copyright->SetFont(wxFontInfo(10).FaceName("Lora"));
 	copyright->SetForegroundColour(wxColour(130, 130, 130));
 
@@ -78,6 +78,11 @@ void MainFrame::SetState(btfl::LauncherState state)
 {
 	m_mainPanel->SetState(state);	
 	m_patchNotesWindow->SetState(state);
+}
+
+void MainFrame::SetEssenceState(btfl::LauncherEssenceState state)
+{
+	m_mainPanel->SetEssenceState(state);
 }
 
 void MainFrame::ShowMainPanel()

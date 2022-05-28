@@ -43,7 +43,8 @@ enum
 
 	BUTTON_AutoUpdate,
 	BUTTON_CloseOnGameLaunch,
-	BUTTON_Uninstall
+	BUTTON_Uninstall,
+	BUTTON_UninstallEssence
 };
 
 class CheckboxShape : public wxSFCircleShape
@@ -99,16 +100,19 @@ private:
 	btfl::Settings m_settings;
 
 	wxSFFlexGridShape* m_mainSettingsGrid = nullptr;
-	wxSFTextShape* m_installPath = nullptr;
+	wxSFTextShape* m_installPath = nullptr,
+		* m_essenceInstallPath = nullptr;
 	CheckboxShape* m_autoUpdate = nullptr,
 		* m_closeSelfOnGameLaunch = nullptr;
 	TransparentButton* m_uninstallButton = nullptr;
 
 	bool m_bIsHoveringInstallPath = false;
+	bool m_bIsHoveringEssenceInstallPath = false;
 
 	wxBitmap m_installPathBmp{ "Assets/Icon/Folder@2x.png", wxBITMAP_TYPE_PNG };
 	float m_fInstallPathBmpScale = 1.0;
 	wxPoint m_installPathBmpPos;
+	wxPoint m_essenceInstallPathBmpPos;
 
 	bool m_bIsDraggingFrame = false;
 	wxRect m_dragSafeArea;
@@ -123,6 +127,7 @@ public:
 	virtual void OnFileLoaded() override;
 
 	void SelectInstallPath();
+	void SelectEssenceInstallPath();
 
 	void SetSettings(const btfl::Settings& settings);
 	btfl::Settings GetSettings() { return m_settings;  }

@@ -54,7 +54,17 @@ namespace btfl
 		STATE_UpdatingGame,
 
 		//These were added late to the party he
-		STATE_VerificationFailed
+		STATE_VerificationFailed,
+	};
+
+	enum LauncherEssenceState
+	{
+		STATE_NoneEssence = 666,
+		STATE_ToInstallGameEssence,
+		STATE_InstallingGameEssence,
+		STATE_ToPlayGameEssence,
+		STATE_ToUpdateGameEssence,
+		STATE_UpdatingGameEssence
 	};
 
 	struct Settings: public xsSerializable
@@ -79,6 +89,15 @@ namespace btfl
 	LauncherState GetState();
 	void RestoreLastState();
 
+	void SetEssenceState(LauncherEssenceState state);
+	LauncherEssenceState GetEssenceState();
+	void RestoreLastEssenceState();
+
+	bool IsUserAnEssence();
+
+	bool UninstallGame(bool showMessages = true);
+	bool UninstallEssenceGame(bool showMessages = true);
+
 	void SetIsoRegion(iso::ISO_Region region);
 	iso::ISO_Region GetIsoRegion();
 
@@ -86,9 +105,18 @@ namespace btfl
 
 	wxString GetInstalledGameVersion();
 	wxString GetInstalledLauncherVersion();
+	wxString GetInstalledEssenceGameVersion();
 
-	void SetLatestGameVerstion(const wxString& version);
+	void SetLatestGameVersion(const wxString& version);
 	wxString GetLatestGameVersion();
+
+	void SetLatestEssenceGameVersion(const wxString& version);
+	wxString GetLatestEssenceGameVersion();
+
+	void SetEncryptedEssencePassword(const wxString& password);
+	wxString GetEncryptedEssencePassword();
+	void SetUserEssencePassword(const wxString& password);
+	wxString GetUserEssencePassword();
 
 	bool ShouldAutoUpdateGame();
 
@@ -106,6 +134,9 @@ namespace btfl
 
 	const wxFileName& GetInstallFileName();
 	void SetInstallPath(const wxString& installPath);
+
+	const wxFileName& GetEssenceInstallFileName();
+	void SetEssenceInstallPath(const wxString& installPath);
 
 	bool HasUserAgreedToDisclaimer();
 	void AgreeToDisclaimer();
